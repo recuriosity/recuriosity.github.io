@@ -1,0 +1,53 @@
+# OS
+.DS_Store
+**/.DS_Store
+
+# Audio source files (used for teaser generation only)
+assets/audio/
+
+# Image source/intermediate files (not used in main.html)
+assets/images/coins.png
+assets/images/cross.png
+assets/images/table_ablation.png
+assets/images/table_maps.png
+
+# Video source files (not used in main.html)
+assets/videos/apple-1.mp4
+assets/videos/apple-2.mp4
+assets/videos/ctx1.mp4
+assets/videos/ctx1-2.mp4
+assets/videos/ctx1-2-map.mp4
+assets/videos/icm-1.mp4
+assets/videos/icm-2.mp4
+assets/videos/icm-2-map.mp4
+assets/videos/image-goal.mp4
+assets/videos/image-goal-labeled.mp4
+assets/videos/lingbot.mp4
+assets/videos/ours-1.mp4
+assets/videos/ours-2.mp4
+assets/videos/ours-2-map.mp4
+assets/videos/training.mp4
+assets/videos/training_action.mp4
+
+# Teaser source subdirectories and source videos
+assets/videos/teaser/obs/
+assets/videos/teaser/map/
+assets/videos/teaser/comp/
+assets/videos/teaser/action/
+assets/videos/teaser/obs_map/
+assets/videos/teaser/obs_map_vs/
+assets/videos/teaser/highres.mp4
+assets/videos/teaser/highres_topdown.mp4
+assets/videos/teaser/hobbit_world_ppo_gpu.mp4
+assets/videos/teaser/1.mp4
+assets/videos/teaser/2.mp4
+assets/videos/teaser/3.mp4
+assets/videos/teaser/4.mp4
+assets/videos/teaser/5.mp4
+assets/videos/teaser/6.mp4
+assets/videos/teaser/7.mp4
+assets/videos/teaser/8.mp4
+assets/videos/teaser/9.mp4
+assets/videos/teaser/10.mp4
+assets/videos/teaser/11.mp4
+assets/videos/teaser/12.mp4
