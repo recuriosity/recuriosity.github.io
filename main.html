@@ -1,63 +1,1256 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ReCuriosity</title>
+  <title>Remember to be Curious</title>
+  <link rel="icon" type="image/png" href="assets/images/goldfish.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:wght@500;600&display=swap" rel="stylesheet">
+  <script>
+    window.MathJax = { tex: { inlineMath: [['$','$']] }, svg: { fontCache: 'global' } };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 900px;
-      margin: 60px auto;
-      padding: 0 24px;
-      line-height: 1.6;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --text:    #1a1a1a;
+      --muted:   #555;
+      --light:   #888;
+      --accent:  #2b6cb0;
+      --border:  #e2e8f0;
+      --bg:      #ffffff;
+      --sec-bg:  #f8fafc;
+      --max-w:   860px;
+      --toc-w:   200px;
+      --toc-gap: 44px;
     }
-    h1 {
-      font-size: 42px;
-      margin-bottom: 8px;
+
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body { font-family: 'Inter', system-ui, sans-serif; color: var(--text); background: var(--bg); line-height: 1.7; }
+
+    /* ── centered main column ───────────────────────────────────────────── */
+    #main-content {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 24px 80px;
     }
-    .subtitle {
-      font-size: 20px;
-      color: #555;
+
+    /* ── TOC: fixed, to the left of the centered column ────────────────── */
+    #toc-sidebar {
+      position: fixed;
+      top: 60px;
+      /* left edge = viewport_center - half_content - toc_width - gap */
+      left: calc(50% - var(--max-w)/2 - var(--toc-w) - var(--toc-gap));
+      width: var(--toc-w);
     }
-    .buttons a {
-      display: inline-block;
-      margin-right: 12px;
-      margin-top: 20px;
-      padding: 10px 16px;
-      border: 1px solid #222;
-      border-radius: 8px;
+
+    #toc-sidebar .toc-title {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--light);
+      margin-bottom: 10px;
+    }
+
+    #toc-sidebar ul { list-style: none; border-left: 2px solid var(--border); padding-left: 14px; }
+    #toc-sidebar li { margin: 4px 0; }
+    #toc-sidebar a {
+      font-size: 0.81rem;
+      color: var(--muted);
       text-decoration: none;
-      color: #222;
+      display: block;
+      padding: 2px 0;
+      transition: color 0.15s;
+      line-height: 1.4;
+    }
+    #toc-sidebar a:hover, #toc-sidebar a.active { color: var(--accent); font-weight: 500; }
+
+    /* hide TOC when there's no room */
+    @media (max-width: calc(860px + 200px + 44px + 80px)) { #toc-sidebar { display: none; } }
+
+    /* ── header ─────────────────────────────────────────────────────────── */
+    #header { text-align: center; padding: 60px 0 40px; }
+
+    #header h1 {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 2.1rem;
+      font-weight: 600;
+      line-height: 1.32;
+      max-width: 700px;
+      margin: 0 auto 28px;
+    }
+
+    .authors {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 2px 0;
+      font-size: 0.97rem;
+      margin-bottom: 10px;
+    }
+
+    .author { white-space: nowrap; }
+    .author a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 500;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .author a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+    .author sup { font-size: 0.65em; color: var(--muted); margin-left: 1px; }
+    .author-sep { color: var(--light); margin: 0 3px; }
+
+    .affiliations {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin: 8px auto 28px;
+      max-width: 580px;
+      line-height: 1.9;
+    }
+    .affiliations sup { font-size: 0.75em; margin-right: 2px; }
+
+    /* ── buttons ─────────────────────────────────────────────────────────── */
+    .btn-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border: 1.5px solid #cbd5e0;
+      border-radius: 6px;
+      font-size: 0.87rem;
+      font-weight: 500;
+      color: var(--text);
+      text-decoration: none;
+      background: var(--bg);
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); background: #ebf4ff; }
+    .btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    /* ── teaser ─────────────────────────────────────────────────────────── */
+    #teaser { margin: 44px 0 52px; }
+    .teaser-wrap { position: relative; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.10); }
+    .teaser-wrap video { width: 100%; display: block; }
+    #mute-btn {
+      position: absolute;
+      bottom: 14px; right: 14px;
+      background: rgba(255,255,255,0.30);
+      border: none;
+      border-radius: 50%;
+      width: 38px; height: 38px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+      backdrop-filter: blur(4px);
+    }
+    #mute-btn:hover { background: rgba(255,255,255,0.50); }
+    #teaser .caption { font-size: 0.83rem; color: var(--muted); text-align: center; margin-top: 10px; line-height: 1.55; max-width: 680px; margin-left: auto; margin-right: auto; }
+
+    /* ── sections ───────────────────────────────────────────────────────── */
+    .section { margin-bottom: 56px; }
+
+    .section h2 {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 1.42rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 16px;
+      /* no underline */
+    }
+
+    .section h3 { font-size: 1.03rem; font-weight: 600; margin: 22px 0 8px; }
+    .section p { margin-bottom: 14px; font-size: 0.97rem; color: #2d2d2d; }
+
+    /* ── figures / media ─────────────────────────────────────────────────── */
+    .fig-row { display: flex; gap: 16px; margin: 24px 0; flex-wrap: wrap; }
+    .fig-row > * { flex: 1 1 0; min-width: 200px; }
+
+    /* ── inset figures (float right beside text) ─────────────────────────── */
+    .inset-right {
+      float: right;
+      clear: right;
+      width: 44%;
+      margin: 4px 0 18px 28px;
+    }
+    .inset-right img { width: 100%; border-radius: 6px; border: 1px solid var(--border); display: block; }
+    .inset-right figcaption { font-size: 0.78rem; color: var(--muted); margin-top: 6px; line-height: 1.45; text-align: center; }
+    .clearfix::after { content: ''; display: table; clear: both; }
+
+    /* ── training action panel ───────────────────────────────────────────── */
+    .training-wrap { position: relative; }
+    #action-panel {
+      position: absolute;
+      top: 0;
+      right: calc(-1 * (var(--toc-gap) + var(--toc-w) + 8px));
+      width: 160px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+      display: none;
+      flex-direction: column;
+    }
+    #action-panel.visible { display: flex; }
+    #action-panel video { width: 100%; display: block; }
+    #action-panel .action-close {
+      position: absolute;
+      top: 4px; right: 4px;
+      background: rgba(0,0,0,0.45);
+      border: none; border-radius: 50%;
+      width: 20px; height: 20px;
+      cursor: pointer; color: #fff;
+      font-size: 0.7rem; line-height: 20px; text-align: center;
+    }
+    /* mobile: panel below the video */
+    @media (max-width: calc(860px + 200px + 44px + 80px)) {
+      #action-panel {
+        position: static;
+        width: auto;
+        max-width: 360px;
+        margin: 8px auto 0;
+        right: auto;
+      }
+      #imggoal-bev-panel {
+        position: static;
+        width: auto;
+        max-width: 360px;
+        margin: 8px auto 0;
+        right: auto;
+      }
+    }
+    .imggoal-wrap { position: relative; }
+    #imggoal-bev-panel {
+      position: absolute;
+      top: 0;
+      right: calc(-1 * (var(--toc-gap) + var(--toc-w) + 8px));
+      width: 160px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+      display: none;
+      flex-direction: column;
+    }
+    #imggoal-bev-panel.visible { display: flex; }
+    #imggoal-bev-panel video { width: 100%; display: block; }
+    #imggoal-bev-panel .action-close {
+      position: absolute;
+      top: 4px; right: 4px;
+      background: rgba(0,0,0,0.45);
+      border: none; border-radius: 50%;
+      width: 20px; height: 20px;
+      cursor: pointer; color: #fff;
+      font-size: 0.7rem; line-height: 20px; text-align: center;
+    }
+
+    figure { margin: 24px 0; text-align: center; }
+    figure img, figure video { width: 100%; border-radius: 6px; display: block; border: 1px solid var(--border); }
+    figcaption { font-size: 0.82rem; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+    figcaption strong { color: var(--text); }
+
+    .video-wrap { position: relative; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+    .video-wrap video { width: 100%; display: block; }
+    .explore-btn {
+      position: absolute;
+      inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.28);
+      cursor: pointer;
+      border: none;
+      width: 100%;
+      transition: background 0.2s;
+    }
+    .explore-btn:hover { background: rgba(0,0,0,0.18); }
+    .explore-btn span {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 1.25rem;
+      color: #7fff7f;
+      letter-spacing: 0.06em;
+      padding: 10px 24px;
+      border: 1.5px solid rgba(127,255,127,0.55);
+      border-radius: 4px;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(4px);
+      pointer-events: none;
+    }
+
+    /* ── highlight box ───────────────────────────────────────────────────── */
+    .highlight-box {
+      background: var(--sec-bg);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 6px 6px 0;
+      padding: 14px 18px;
+      margin: 20px 0;
+      font-size: 0.95rem;
+      color: #2d2d2d;
+    }
+
+    /* ── results table ───────────────────────────────────────────────────── */
+    .results-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 20px 0; }
+    .results-table th { text-align: center; padding: 8px 12px; background: var(--sec-bg); border-bottom: 2px solid var(--border); font-weight: 600; }
+    .results-table td { text-align: center; padding: 7px 12px; border-bottom: 1px solid var(--border); color: #2d2d2d; }
+    .results-table td:first-child { text-align: left; }
+    .results-table tr:last-child td { border-bottom: none; }
+    .results-table .ours td { background: #eff6ff; font-weight: 600; }
+
+    /* ── citation ────────────────────────────────────────────────────────── */
+    .citation-block {
+      position: relative;
+      background: var(--sec-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px 18px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.80rem;
+      line-height: 1.6;
+      color: #2d2d2d;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 10px; right: 10px;
+      font-size: 0.74rem;
+      font-family: 'Inter', sans-serif;
+      padding: 3px 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--bg);
+      cursor: pointer;
+      color: var(--muted);
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ── references ──────────────────────────────────────────────────────── */
+    #references ol { padding-left: 20px; font-size: 0.85rem; color: var(--muted); line-height: 1.65; }
+    /* ── video selector ──────────────────────────────────────────────────── */
+    .vid-selector { display: flex; flex-direction: column; gap: 0; }
+    .vid-sel-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; justify-content: center; }
+    .sel-btn {
+      font-size: 0.8rem; padding: 4px 14px;
+      border: 1px solid var(--border); border-radius: 20px;
+      background: var(--sec-bg); color: var(--muted);
+      cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .sel-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .sel-btn.active {
+      background: var(--accent); color: #fff;
+      border-color: var(--accent);
+    }
+    #references li { margin-bottom: 8px; }
+    #references a { color: var(--accent); text-decoration: none; }
+    #references a:hover { text-decoration: underline; }
+
+    /* ── collapsible details ─────────────────────────────────────────────── */
+    .section details {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin: 20px 0;
+      background: var(--sec-bg);
+    }
+    .section details summary {
+      font-size: 0.92rem;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--muted);
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section details summary::before {
+      content: '▶';
+      font-size: 0.65rem;
+      transition: transform 0.2s;
+    }
+    .section details[open] summary::before { transform: rotate(90deg); }
+    .section details p { margin-top: 12px; font-size: 0.95rem; }
+
+    /* ── footer ──────────────────────────────────────────────────────────── */
+    footer { text-align: center; font-size: 0.78rem; color: var(--light); padding: 32px 0 48px; border-top: 1px solid var(--border); margin-top: 16px; }
+
+    @media (max-width: 640px) {
+      #header h1 { font-size: 1.55rem; }
+      .fig-row { flex-direction: column; }
+      .inset-right { float: none; width: 100%; margin: 16px 0; }
     }
   </style>
 </head>
 <body>
-  <h1>ReCuriosity</h1>
 
-  <p class="subtitle">
-    Remember to be Curious: [Your full paper subtitle here]
-  </p>
+<div id="main-content">
 
-  <p>
-    We introduce a curiosity-driven exploration agent that uses persistent world
-    models and episodic memory to explore complex 3D environments.
-  </p>
+  <!-- ── HEADER ─────────────────────────────────────────────────────────── -->
+  <div id="header">
+    <h1>Remember to be Curious: Episodic Context and&nbsp;Persistent Worlds for 3D Exploration</h1>
 
-  <div class="buttons">
-    <a href="#">Paper</a>
-    <a href="#">Code</a>
-    <a href="#">Data</a>
+    <div class="authors">
+      <span class="author"><a href="https://lilygoli.github.io/" target="_blank">Lily Goli</a><sup>1,3,4</sup></span><span class="author-sep">,</span>
+      <span class="author"><a href="https://kerrj.github.io/" target="_blank">Justin Kerr</a><sup>2</sup></span><span class="author-sep">,</span>
+      <span class="author"><a href="https://rdednl.github.io/" target="_blank">Daniele Reda</a><sup>3</sup></span><span class="author-sep">,</span>
+      <span class="author"><a href="https://www.cs.toronto.edu/~jacobson/" target="_blank">Alec Jacobson</a><sup>1,4</sup></span><span class="author-sep">,</span>
+      <span class="author"><a href="https://taiya.github.io/" target="_blank">Andrea Tagliasacchi</a><sup>1,3,5</sup></span><span class="author-sep">,</span>
+      <span class="author"><a href="https://people.eecs.berkeley.edu/~kanazawa/" target="_blank">Angjoo Kanazawa</a><sup>2</sup></span>
+    </div>
+
+    <div class="affiliations">
+      <sup>1</sup> University of Toronto &nbsp;·&nbsp;
+      <sup>2</sup> UC Berkeley &nbsp;·&nbsp;
+      <sup>3</sup> Wayve Labs &nbsp;·&nbsp;
+      <sup>4</sup> Vector Institute &nbsp;·&nbsp;
+      <sup>5</sup> Simon Fraser University
+    </div>
+
+    <div class="btn-row">
+      <a class="btn" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Paper
+      </a>
+      <a class="btn" href="#">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.49.5.09.66-.22.66-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.46-1.11-1.46-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0112 6.8c.85 0 1.71.11 2.51.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.16.58.67.48A10.01 10.01 0 0022 12c0-5.52-4.48-10-10-10z"/></svg>
+        Code
+      </a>
+      <a class="btn" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+        arXiv
+      </a>
+    </div>
   </div>
 
-  <h2>Abstract</h2>
-  <p>
-    Paste your abstract here.
-  </p>
+  <!-- ── TEASER VIDEO ───────────────────────────────────────────────────── -->
+  <div id="teaser" class="section">
+    <div class="teaser-wrap">
+      <video id="teaser-video" loop playsinline muted>
+        <source src="assets/videos/teaser/teaser.mp4" type="video/mp4">
+      </video>
+      <button id="mute-btn" onclick="toggleMute()" title="Toggle sound">🔇</button>
+    </div>
+    <p class="caption">
+      <img src="assets/images/goldfish.png" alt="goldfish" style="height:1.2em; vertical-align:middle; margin-right:4px;"> <strong>Remember to be Curious:</strong> An end-to-end curiosity-driven exploration policy trained with
+      episodic context for the agent and a persistent model for the world.
+    </p>
+  </div>
 
-  <h2>Method</h2>
-  <p>
-    Add your method summary, teaser figure, and videos here.
-  </p>
+  <!-- ── SECTION 1: What is curiosity? ─────────────────────────────────── -->
+  <div id="sec-curiosity" class="section clearfix">
+    <h2>What is curiosity?</h2>
+
+    <figure class="inset-right">
+      <img src="assets/images/rl_usual.png" alt="Standard RL agent">
+    </figure>
+
+    <p>
+      In reinforcement learning, an agent acts in the world, and the world responds: the
+      state changes, the agent receives a new observation, and, if the outcome helps the
+      agent accomplish its goal, the world may also provide a reward.
+    </p>
+
+    <p>
+      But in many tasks, defining this reward is not straightforward, and even when a
+      reward exists, it may be sparse. This is where curiosity enters the scene. Think of
+      a toddler in a playground: no one explicitly rewards them for figuring out how a toy
+      works, yet they keep poking, turning, stacking, and exploring. What drives them is
+      their own curiosity about how things behave and what else might be around them. This
+      is the intuition behind curiosity-driven exploration <a href="#ref1">[1]</a>,
+      <a href="#ref2">[2]</a>.
+    </p>
+
+    <figure class="inset-right">
+      <img src="assets/images/rl_curious.png" alt="Curious RL agent">
+    </figure>
+
+    <p>
+      In this framework, curiosity is tied to <em>learning</em> how the world changes in
+      response to the agent's actions. The agent maintains a model that tries to predict
+      what will happen next. When the real world reacts in an unexpected way, the model is
+      surprised, and that surprise becomes an intrinsic reward. In other words, the agent
+      is rewarded for discovering something it does not yet understand.
+    </p>
+
+    <p>
+      This intrinsic reward encourages the agent to seek out novel parts of the world and
+      gradually complete its internal model of how the environment works. To make this
+      possible, curiosity-based agents include an additional component called a
+      <strong>forward model</strong>, whose job is to learn the dynamics of the world.
+    </p>
+  </div>
+
+  <!-- ── SECTION 1b: Why be curious? ──────────────────────────────────── -->
+  <div id="sec-why" class="section">
+    <h2>Why be curious in 3D?</h2>
+    <p>
+      We live in a 3D world, and one of the first things we are curious about is our
+      surroundings. It is what we do when we arrive at a new house or hotel: we look
+      around, check out the rooms, and see what amenities are there.
+      Exploring also makes other things easier, like finding an apple in the kitchen, or tracking down that one family photo hanging somewhere in your parents' house.
+      So it is only natural that our agents can explore the 3D world too!
+    </p>
+    <figure>
+      <div class="video-wrap">
+        <video id="vid-spa" muted loop playsinline>
+          <source src="assets/videos/spa.mp4" type="video/mp4">
+        </video>
+        <button class="explore-btn" onclick="startExplore('vid-spa', this)" aria-label="Play video">
+          <span>&gt; explore</span>
+        </button>
+      </div>
+      <figcaption>Exploring a hotel spa.</figcaption>
+    </figure>
+    <p>
+      And it is not only the real world we can explore. We show that a curious agent
+      trained on real indoor scans can generalize to AI-generated worlds and explore an
+      imaginary world too, like this spaceship from World Labs <a href="#ref3">[3]</a>.
+    </p>
+    <figure>
+      <div class="video-wrap">
+        <video id="vid-spaceship" muted loop playsinline>
+          <source src="assets/videos/spaceship.mp4" type="video/mp4">
+        </video>
+        <button class="explore-btn" onclick="startExplore('vid-spaceship', this)" aria-label="Play video">
+          <span>&gt; explore</span>
+        </button>
+      </div>
+      <figcaption>Generalizing to an AI-generated spaceship world from World Labs.</figcaption>
+    </figure>
+  </div>
+
+  <!-- ── SECTION 2: The forward model ──────────────────────────────────── -->
+  <div id="sec-forward" class="section">
+    <h2>The forward model: persistent edition</h2>
+
+    <p>
+      In the original curiosity framework (ICM) <a href="#ref2">[2]</a>, the forward model is trained together with the policy.
+      As the agent explores, this model gradually learns how the world changes in response
+      to the agent's actions and uses its prediction error as a curiosity reward.
+      This makes curiosity tricky to apply in diverse, continuous 3D worlds. Learning an
+      accurate world model is already hard <a href="#ref4">[4]</a>, <a href="#ref5">[5]</a>,
+      and when the model is trained together with the policy, the reward keeps changing as
+      the model changes between different episodes of exploration. This makes the curiosity signal non-stationary and unstable.
+    </p>
+
+    <p>
+      More importantly, the forward model learns <em>slowly</em> across training, not <em>immediately</em>
+      within an episode. If the agent observes a place early in a rollout, that observation
+      is not instantly written into the model. As a result, the model can keep being wrong
+      about a state the agent has already visited, and the agent may return to the same
+      non-novel places just to collect more prediction error as reward. This lack of persistence can
+      collapse both the forward model and the policy.
+    </p>
+
+    <figure>
+      <div class="video-wrap explore-wrap" style="position:relative;">
+        <video id="vid-icm" muted loop playsinline>
+          <source src="assets/videos/icm-1-map.mp4" type="video/mp4">
+        </video>
+        <button class="explore-btn" onclick="startExplore('vid-icm', this)" aria-label="Play video">
+          <span>&gt; explore</span>
+        </button>
+      </div>
+      <figcaption>
+        Agent trained with ICM collapses into repeated loops because the forward model is
+        not persistent within the episode.
+      </figcaption>
+    </figure>
+
+    <p>
+      Count-based methods <a href="#ref6">[6]</a>, <a href="#ref7">[7]</a> try to address
+      this by counting which states have been visited. But in realistic 3D environments,
+      the state is continuous and high-dimensional, so reducing it to a discrete count can
+      throw away much of the structure of the world.
+    </p>
+
+    <p>
+      We instead use a persistent forward model for static scenes. The model acts as a memory
+      that remains reliable throughout the episode and can immediately integrate new
+      observations as the agent explores. We implement this memory with 3D Gaussian
+      Splatting (3DGS), updating the scene representation online as new views arrive.
+    </p>
+
+    <figure class="training-wrap">
+      <div class="video-wrap">
+        <video id="vid-training" muted playsinline>
+          <source src="assets/videos/training_labeled.mp4" type="video/mp4">
+        </video>
+        <button class="explore-btn" onclick="startExplore('vid-training', this)" aria-label="Play video">
+          <span>&gt; explore</span>
+        </button>
+      </div>
+
+      <!-- Action distribution panel: shown on Bird's Eye View click -->
+      <div id="action-panel">
+        <video id="vid-action" muted loop playsinline>
+          <source src="assets/videos/training_bev.mp4" type="video/mp4">
+        </video>
+        <button class="action-close" onclick="hideActionPanel()" title="Close">✕</button>
+      </div>
+
+      <figcaption>
+        3DGS model remains persistent and updates as new observations are made.
+        The reward is derived from comparing the 3DGS rendering and the observation
+        (coins icon shows positive reward). Agent takes forward (F) step, looks right (R)
+        or left (L) or pauses (P); brighter color shows higher probability of the action.
+        <button onclick="toggleActionPanel()" id="action-toggle-btn"
+                style="margin-left:8px; font-size:0.8rem; padding:2px 10px;
+                       border:1px solid var(--border); border-radius:4px;
+                       background:var(--sec-bg); cursor:pointer; color:var(--muted);">
+          🗺 Show bird's eye view
+        </button>
+      </figcaption>
+    </figure>
+
+    <p>
+      The rendering error of each frame before that observation is integrated into 3DGS
+      shows the novelty reward and guides the exploration policy. Importantly,
+      <strong>the forward model is only an auxiliary module during training.</strong>
+      At deployment time, it is discarded, and only the agent runs its learned exploration
+      policy in a new scene.
+    </p>
+
+    <details>
+      <summary>Why not use generative world models (yet)?</summary>
+      <p>
+        Generative world models have made impressive progress. However, for exploration,
+        persistence is essential: once an area has been seen, the model should remember it
+        so the agent does not revisit it repeatedly. The model also needs to incorporate
+        new observations in a closed loop, updating itself at every step as the agent moves
+        through the world. While current models are improving quickly, we find that they are
+        not yet persistent in this sense, and they cannot easily integrate feedback from new
+        observations during exploration <a href="#ref4">[4]</a>.
+        <figure class="inset-right" style="width:32%; margin-top:-30px;">
+          <video autoplay muted loop playsinline style="width:100%; border-radius:6px; border:1px solid var(--border); display:block;">
+            <source src="assets/videos/lingbot_hold.mp4" type="video/mp4">
+          </video>
+        </figure>
+        Here is a video generated from Lingbot with a 360 turn, conditioned on the first image,
+        showing the first frame is not preserved as the turn finishes.
+        However, they hold great promise for exploration in dynamic 3D scenes as they continue to improve.
+      </p>
+    </details>
+  </div>
+
+  <!-- ── SECTION 3: Agent's gotta remember too! ────────────────────────── -->
+  <div id="sec-memory" class="section">
+    <h2>Agent's gotta remember too!</h2>
+
+    <p>
+      As we discussed above, the forward model is decoupled from the policy agent itself.
+      It is used during training to provide a curiosity reward, but is usually discarded at
+      deployment time. This means the agent (policy network) does not have access to the
+      persistent memory stored in the forward model. To plan its actions well, the agent
+      needs a memory of its own.
+    </p>
+
+    <p>
+      Previous approaches often give the agent only a weak recurrent memory, such as an
+      LSTM, or no explicit memory mechanism at all [<a href="#ref1">1</a>,<a href="#ref8">8</a>,<a href="#ref9">9</a>]. In 3D exploration, this can lead to
+      degenerate policies where the agent falls into loops, repeatedly returning to rooms
+      it has already visited because it does not remember being there before.
+    </p>
+
+    <figure>
+      <div class="video-wrap explore-wrap" style="position:relative;">
+        <video id="vid-ctx1" src="assets/videos/ctx1-map.mp4" playsinline muted loop style="width:100%; display:block;"></video>
+        <button class="explore-btn" onclick="startExplore('vid-ctx1', this)" aria-label="Play video">
+          <span>&gt; explore</span>
+        </button>
+      </div>
+      <figcaption>Agent without episodic memory, falling into repeated loops.</figcaption>
+    </figure>
+
+    <p>
+      We address this by giving the agent access to the context of its own observations
+      throughout the exploration episode. We design the agent as a causal attention
+      transformer: the input is the sequence of RGB observations up to the current
+      timestep, and the outputs are the action distribution and state value.
+    </p>
+
+    <p>
+      To keep the model efficient, we use sliding-window attention, which limits the cost
+      of attending over long trajectories, but weakens the connection to distant history.
+      Therefore, we augment every few attention layers with a linear attention layer,
+      inspired by TTT-style memory, to keep global context available.
+    </p>
+
+    <figure>
+      <img src="assets/images/method.png" alt="Model architecture diagram">
+      <figcaption>Architecture of our context-aware exploration agent.</figcaption>
+    </figure>
+
+    <p>
+      We train this agent end-to-end from RGB image inputs to a discrete distribution
+      over actions, then deploy the learned policy in new scenes for exploration. Depth
+      and camera pose are used only during training for the 3DGS reconstruction module,
+      which keeps the reward computation fast enough for RL rollouts. Below, the same
+      scene is explored effectively by our memory-equipped agent.
+    </p>
+
+    <figure>
+      <div class="video-wrap explore-wrap" style="position:relative;">
+        <video id="vid-ours1" src="assets/videos/ours-1-map.mp4" playsinline muted loop style="width:100%; display:block;"></video>
+        <button class="explore-btn" onclick="startExplore('vid-ours1', this)" aria-label="Play video">
+          <span>&gt; explore</span>
+        </button>
+      </div>
+      <figcaption>Our agent exploring the same scene effectively equipped with episodic context and trained with a persistent forward model.</figcaption>
+    </figure>
+  </div>
+
+  <!-- ── SECTION 4: Maps are also cool but ... ─────────────────────────── -->
+  <div id="sec-maps" class="section">
+    <h2>Maps are also cool but&nbsp;…</h2>
+    <p>
+      Discuss the role of topdown maps and their limitations here.
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+    </p>
+    <!-- Method + Scene video selector -->
+    <div class="vid-selector">
+      <div class="vid-sel-btns" id="maps-method-btns">
+        <button class="sel-btn active" data-group="maps-method" data-val="ours">Ours</button>
+        <button class="sel-btn" data-group="maps-method" data-val="ans-rgb">ANS-RGB</button>
+        <button class="sel-btn" data-group="maps-method" data-val="ans-depth">ANS-depth</button>
+        <button class="sel-btn" data-group="maps-method" data-val="occa-rgb">OccA-RGB</button>
+        <button class="sel-btn" data-group="maps-method" data-val="occa-rgbd">OccA-RGBD</button>
+      </div>
+      <figure style="margin:0;">
+        <div class="video-wrap" style="position:relative;">
+          <video id="vid-maps" muted loop playsinline autoplay style="width:100%; display:block; background:#f0f0f0;">
+            <source id="vid-maps-src" src="" type="video/mp4">
+          </video>
+          <div id="vid-maps-placeholder" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f0f0f0;">
+            <span style="color:var(--light);font-size:0.9rem;">Video placeholder</span>
+          </div>
+        </div>
+      </figure>
+      <div class="vid-sel-btns" id="maps-scene-btns" style="margin-top:8px;">
+        <button class="sel-btn active" data-group="maps-scene" data-val="scene1">Scene 1</button>
+        <button class="sel-btn" data-group="maps-scene" data-val="scene2">Scene 2</button>
+        <button class="sel-btn" data-group="maps-scene" data-val="scene3">Scene 3</button>
+      </div>
+    </div>
+
+    <table class="results-table" style="font-size:0.82rem;">
+      <thead>
+        <tr>
+          <th rowspan="2" style="text-align:left; border-right:1px solid var(--border);">Step</th>
+          <th colspan="3" style="border-bottom:1px solid var(--border);">HM3D — Completeness % ↑</th>
+          <th style="border-bottom:1px solid var(--border); border-right:1px solid var(--border);">Avg. dist. (m) ↓</th>
+          <th colspan="3" style="border-bottom:1px solid var(--border);">Gibson — Completeness % ↑</th>
+          <th style="border-bottom:1px solid var(--border);">Avg. dist. (m) ↓</th>
+        </tr>
+        <tr>
+          <th>@256</th><th>@512</th><th>@1024</th>
+          <th style="border-right:1px solid var(--border);">@1024</th>
+          <th>@256</th><th>@512</th><th>@1024</th>
+          <th>@1024</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="text-align:left;">ANS-RGB <a href="#ref10">[10]</a></td>
+          <td>45.28</td><td>54.68</td><td>65.39</td>
+          <td style="border-right:1px solid var(--border);">0.41</td>
+          <td>55.41</td><td>64.20</td><td>73.14</td><td>0.30</td>
+        </tr>
+        <tr>
+          <td style="text-align:left;">ANS-depth <a href="#ref10">[10]</a></td>
+          <td>51.02</td><td>61.45</td><td>69.68</td>
+          <td style="border-right:1px solid var(--border);">0.34</td>
+          <td>63.04</td><td>72.79</td><td>79.89</td><td>0.18</td>
+        </tr>
+        <tr>
+          <td style="text-align:left;">OccA-RGB <a href="#ref11">[11]</a></td>
+          <td>47.67</td><td>58.32</td><td>68.86</td>
+          <td style="border-right:1px solid var(--border);">0.33</td>
+          <td>57.33</td><td>67.35</td><td>77.93</td><td>0.16</td>
+        </tr>
+        <tr>
+          <td style="text-align:left;">OccA-RGBD <a href="#ref11">[11]</a></td>
+          <td>52.71</td><td>64.91</td><td>74.62</td>
+          <td style="border-right:1px solid var(--border);">0.18</td>
+          <td>63.06</td><td>72.96</td><td>81.23</td><td>0.14</td>
+        </tr>
+        <tr class="ours">
+          <td style="text-align:left;"><strong>Ours</strong></td>
+          <td><strong>56.5</strong></td><td><strong>66.69</strong></td><td><strong>74.94</strong></td>
+          <td style="border-right:1px solid var(--border);"><strong>0.14</strong></td>
+          <td><strong>66.95</strong></td><td><strong>75.79</strong></td><td><strong>82.42</strong></td>
+          <td><strong>0.10</strong></td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size:0.8rem; color:var(--muted); margin-top:6px;">
+      Completeness % and average distance of each surface point to the closest visited point, on HM3D and Gibson benchmarks.
+    </p>
+  </div>
+
+  <!-- ── SECTION 5: Pick the apple! Find the image! ────────────────────── -->
+  <div id="sec-tasks" class="section">
+    <h2>Pick the apple! Find the image!</h2>
+    <p>
+      Exploration is particularly useful for downstream tasks with sparse rewards. We show
+      that we can finetune our exploration agent for a few episodes to learn to pick up apples:
+    </p>
+    <figure>
+      <div class="video-wrap explore-wrap" style="position:relative;">
+        <video id="vid-apple" muted loop playsinline>
+          <source src="assets/videos/apple.mp4" type="video/mp4">
+        </video>
+        <button class="explore-btn" onclick="startExplore('vid-apple', this)" aria-label="Play video">
+          <span>&gt; pick apple</span>
+        </button>
+      </div>
+      <figcaption><strong>Pick the apple.</strong> Agent finetuned to pick up apples in the scene.</figcaption>
+    </figure>
+    <p>or to fetch a user-specified image view in the scene:</p>
+    <figure class="imggoal-wrap">
+      <div class="video-wrap explore-wrap" style="position:relative;">
+        <video id="vid-imggoal" muted loop playsinline>
+          <source src="assets/videos/image-goal-main.mp4" type="video/mp4">
+        </video>
+        <button class="explore-btn" onclick="startExplore('vid-imggoal', this)" aria-label="Play video">
+          <span>&gt; find image</span>
+        </button>
+      </div>
+
+      <!-- Bird's eye view panel -->
+      <div id="imggoal-bev-panel">
+        <video id="vid-imggoal-bev" muted loop playsinline>
+          <source src="assets/videos/image-goal-bev.mp4" type="video/mp4">
+        </video>
+        <button class="action-close" onclick="hideImggoalBev()" title="Close">✕</button>
+      </div>
+
+      <figcaption><strong>Find the image.</strong> Agent finetuned for image-goal navigation.
+        <button onclick="toggleImggoalBev()" id="imggoal-bev-btn"
+                style="margin-left:8px; font-size:0.8rem; padding:2px 10px;
+                       border:1px solid var(--border); border-radius:4px;
+                       background:var(--sec-bg); cursor:pointer; color:var(--muted);">
+          🗺 Show bird's eye view
+        </button>
+      </figcaption>
+    </figure>
+    <p>
+      For the image-goal task, the image condition is given as an extra context frame to the
+      agent policy network, which attends to it together with all other frame tokens.
+    </p>
+  </div>
+
+  <!-- ── SECTION 6: Let's analyze the memory ───────────────────────────── -->
+  <div id="sec-analysis" class="section">
+    <h2>Let's analyze the memory</h2>
+    <p>
+      Provide analysis of the episodic memory here. Lorem ipsum dolor sit amet,
+      consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.
+    </p>
+    <!-- Ablation video selector -->
+    <div class="vid-selector">
+      <div class="vid-sel-btns" id="ablation-method-btns">
+        <button class="sel-btn active" data-group="ablation-method" data-val="ours">Ours</button>
+        <button class="sel-btn" data-group="ablation-method" data-val="icm-rnn">ICM RNN</button>
+        <button class="sel-btn" data-group="ablation-method" data-val="icm-transformer">ICM transformer</button>
+        <button class="sel-btn" data-group="ablation-method" data-val="short-memory-3dgs">Short Memory 3DGS</button>
+      </div>
+      <figure style="margin:0;">
+        <div class="video-wrap" style="position:relative;">
+          <video id="vid-ablation" muted loop playsinline autoplay style="width:100%; display:block; background:#f0f0f0;">
+            <source id="vid-ablation-src" src="" type="video/mp4">
+          </video>
+          <div id="vid-ablation-placeholder" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f0f0f0;">
+            <span style="color:var(--light);font-size:0.9rem;">Video placeholder</span>
+          </div>
+        </div>
+        <figcaption>Memory analysis visualization.</figcaption>
+      </figure>
+      <div class="vid-sel-btns" style="margin-top:8px;">
+        <button class="sel-btn" data-group="ablation-method" data-val="ours-rnn">Ours RNN</button>
+        <button class="sel-btn" data-group="ablation-method" data-val="actor-ctx1">Actor with context=1</button>
+        <button class="sel-btn" data-group="ablation-method" data-val="critic-ctx1">Critic with context=1</button>
+        <button class="sel-btn" data-group="ablation-method" data-val="both-ctx16">Both with context=16</button>
+        <button class="sel-btn" data-group="ablation-method" data-val="both-ctx4">Both with context=4</button>
+        <button class="sel-btn" data-group="ablation-method" data-val="both-ctx1">Both with context=1</button>
+      </div>
+    </div>
+
+    <div style="overflow-x:auto; margin-top:8px;">
+      <table class="results-table" style="font-size:0.80rem; min-width:700px;">
+        <thead>
+          <tr>
+            <th style="text-align:left;">Metrics</th>
+            <th><strong>Ours</strong></th>
+            <th>ICM<br>RNN</th>
+            <th>ICM<br>transformer</th>
+            <th>Short Memory<br>(64) 3DGS</th>
+            <th>Ours<br>RNN</th>
+            <th>Actor<br>w/ ctx=1</th>
+            <th>Critic<br>w/ ctx=1</th>
+            <th>Both<br>w/ ctx=16</th>
+            <th>Both<br>w/ ctx=4</th>
+            <th>Both<br>w/ ctx=1</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="text-align:left;">Compl. %@256 ↑</td>
+            <td><strong>56.5</strong></td>
+            <td>32.70</td><td>35.25</td><td>33.35</td><td>50.70</td>
+            <td>51.95</td><td>47.09</td><td>51.80</td><td>45.87</td><td>40.66</td>
+          </tr>
+          <tr>
+            <td style="text-align:left;">Compl. %@512 ↑</td>
+            <td><strong>66.69</strong></td>
+            <td>35.52</td><td>38.89</td><td>36.05</td><td>59.52</td>
+            <td>61.79</td><td>56.09</td><td>60.66</td><td>53.83</td><td>46.09</td>
+          </tr>
+          <tr>
+            <td style="text-align:left;">Compl. %@1024 ↑</td>
+            <td><strong>74.94</strong></td>
+            <td>37.36</td><td>43.44</td><td>38.09</td><td>67.33</td>
+            <td>70.11</td><td>63.72</td><td>67.77</td><td>60.56</td><td>50.39</td>
+          </tr>
+          <tr>
+            <td style="text-align:left;">Avg. dist. ↓</td>
+            <td><strong>0.14</strong></td>
+            <td>1.10</td><td>0.94</td><td>1.07</td><td>0.29</td>
+            <td>0.24</td><td>0.42</td><td>0.28</td><td>0.43</td><td>0.68</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:0.8rem; color:var(--muted); margin-top:6px;">
+      Ablation of memory context for the agent and forward model persistence on HM3D.
+    </p>
+  </div>
+
+  <!-- ── CITATION ───────────────────────────────────────────────────────── -->
+  <div id="citation" class="section">
+    <h2>Citation</h2>
+    <p>If you find this work useful, please cite:</p>
+    <div class="citation-block" id="bibtex-block">@article{goli2025recuriosity,
+  title   = {Remember to be Curious: Episodic Context and Persistent Worlds for 3D Exploration},
+  author  = {Goli, Lily and Kerr, Justin and Reda, Daniele and Jacobson, Alec and Tagliasacchi, Andrea and Kanazawa, Angjoo},
+  journal = {arXiv},
+  year    = {2025}
+}</div>
+    <button class="copy-btn" onclick="copyBibtex()">Copy</button>
+  </div>
+
+  <!-- ── REFERENCES ─────────────────────────────────────────────────────── -->
+  <div id="references" class="section">
+    <h2>References</h2>
+    <ol>
+      <li id="ref1">
+        Jürgen Schmidhuber. <em>A possibility for implementing curiosity and boredom in model-building neural controllers.</em>
+        In <em>From Animals to Animats: Proceedings of the First International Conference on Simulation of Adaptive Behavior.</em>
+        MIT Press/Bradford Books, 1991.
+      </li>
+      <li id="ref2">
+        Deepak Pathak, Pulkit Agrawal, Alexei A. Efros, and Trevor Darrell.
+        <em>Curiosity-driven exploration by self-supervised prediction.</em>
+        In <em>ICML</em>, 2017.
+      </li>
+      <li id="ref3">
+        World Labs. <em>Generating worlds.</em>
+        <a href="https://www.worldlabs.ai/blog/generating-worlds" target="_blank">worldlabs.ai/blog/generating-worlds</a>;
+        <a href="https://www.worldlabs.ai/blog/spark-2.0" target="_blank">worldlabs.ai/blog/spark-2.0</a>, 2024.
+      </li>
+      <li id="ref4">
+        Robbyant Team and Zelin Gao et al.
+        <em>Advancing open-source world models.</em>
+        arXiv preprint arXiv:2601.20540, 2026.
+        <a href="https://arxiv.org/abs/2601.20540" target="_blank">[arXiv]</a>
+      </li>
+      <li id="ref5">
+        Tianchang Shen and Sherwin Bahmani et al.
+        <em>Lyra 2.0: Explorable generative 3D worlds.</em>
+        arXiv preprint arXiv:2604.13036, 2026.
+        <a href="https://arxiv.org/abs/2604.13036" target="_blank">[arXiv]</a>
+      </li>
+      <li id="ref6">
+        Adrià Puigdomènech Badia and Pablo Sprechmann et al.
+        <em>Never give up: Learning directed exploration strategies.</em>
+        In <em>ICLR</em>, 2020.
+      </li>
+      <li id="ref7">
+        Roberta Raileanu and Tim Rocktäschel.
+        <em>RIDE: Rewarding impact-driven exploration for procedurally-generated environments.</em>
+        In <em>ICLR</em>, 2020.
+      </li>
+      <li id="ref8">
+        Yuri Burda, Harri Edwards, Deepak Pathak, Amos Storkey, Trevor Darrell, and Alexei A. Efros.
+        <em>Large-scale study of curiosity-driven learning.</em>
+        In <em>ICLR</em>, 2019.
+      </li>
+      <li id="ref9">
+        Yuri Burda, Harrison Edwards, Amos Storkey, and Oleg Klimov.
+        <em>Exploration by random network distillation.</em>
+        In <em>ICLR</em>, 2019.
+      </li>
+      <li id="ref10">
+        Devendra Singh Chaplot, Dhiraj Gandhi, Saurabh Gupta, Abhinav Gupta, and Ruslan Salakhutdinov.
+        <em>Learning to explore using active neural SLAM.</em>
+        In <em>ICLR</em>, 2020.
+      </li>
+      <li id="ref11">
+        Santhosh K. Ramakrishnan, Ziad Al-Halah, and Kristen Grauman.
+        <em>Occupancy anticipation for efficient exploration and navigation.</em>
+        In <em>ECCV</em>, 2020.
+      </li>
+    </ol>
+  </div>
+
+</div><!-- /main-content -->
+
+<!-- ── TOC (fixed, outside main flow) ──────────────────────────────────── -->
+<nav id="toc-sidebar">
+  <div class="toc-title">Contents</div>
+  <ul>
+    <li><a href="#teaser">Teaser video</a></li>
+    <li><a href="#sec-curiosity">What is curiosity?</a></li>
+    <li><a href="#sec-why">Why be curious in 3D?</a></li>
+    <li><a href="#sec-forward">The forward model</a></li>
+    <li><a href="#sec-memory">Agent's memory</a></li>
+    <li><a href="#sec-maps">Maps are cool but…</a></li>
+    <li><a href="#sec-tasks">Pick the apple!</a></li>
+    <li><a href="#sec-analysis">Analysis of the memory</a></li>
+    <li><a href="#citation">Citation</a></li>
+    <li><a href="#references">References</a></li>
+  </ul>
+</nav>
+
+<footer>
+  &copy; 2025 The Authors.
+</footer>
+
+<script>
+  // ── active TOC highlight ─────────────────────────────────────────────────
+  const sections = document.querySelectorAll('.section[id]');
+  const tocLinks = document.querySelectorAll('#toc-sidebar a');
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        tocLinks.forEach(l => l.classList.remove('active'));
+        const a = document.querySelector(`#toc-sidebar a[href="#${e.target.id}"]`);
+        if (a) a.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-15% 0px -75% 0px' });
+
+  sections.forEach(s => obs.observe(s));
+
+  // ── teaser: play when in view, pause when out ────────────────────────────
+  const teaserVideo = document.getElementById('teaser-video');
+
+  const teaserObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        teaserVideo.play().catch(() => {});
+      } else {
+        teaserVideo.pause();
+      }
+    });
+  }, { threshold: 0.25 });
+  teaserObs.observe(teaserVideo);
+
+  // ── mute toggle ─────────────────────────────────────────────────────────
+  function toggleMute() {
+    const btn = document.getElementById('mute-btn');
+    teaserVideo.muted = !teaserVideo.muted;
+    btn.textContent = teaserVideo.muted ? '🔇' : '🔊';
+  }
+
+  // ── copy BibTeX ──────────────────────────────────────────────────────────
+  // ── action distribution panel ────────────────────────────────────────────
+  function toggleActionPanel() {
+    const panel = document.getElementById('action-panel');
+    const actVid = document.getElementById('vid-action');
+    const btn = document.getElementById('action-toggle-btn');
+    const isVisible = panel.classList.contains('visible');
+    if (isVisible) {
+      panel.classList.remove('visible');
+      actVid.pause();
+      btn.textContent = '🗺 Show bird\'s eye view';
+    } else {
+      panel.classList.add('visible');
+      const mainVid = document.getElementById('vid-training');
+      actVid.currentTime = mainVid.currentTime;
+      if (!mainVid.paused) actVid.play().catch(() => {});
+      btn.textContent = '✕ Hide';
+    }
+  }
+  function hideActionPanel() {
+    const panel = document.getElementById('action-panel');
+    document.getElementById('vid-action').pause();
+    panel.classList.remove('visible');
+    document.getElementById('action-toggle-btn').textContent = '🗺 Show bird\'s eye view';
+  }
+  // Sync action panel video with main training video
+  document.getElementById('vid-training').addEventListener('play', () => {
+    const p = document.getElementById('action-panel');
+    const v = document.getElementById('vid-action');
+    if (p.classList.contains('visible')) v.play().catch(() => {});
+  });
+  document.getElementById('vid-training').addEventListener('pause', () => {
+    document.getElementById('vid-action').pause();
+  });
+
+  // ── image-goal BEV panel ─────────────────────────────────────────────────
+  function toggleImggoalBev() {
+    const panel  = document.getElementById('imggoal-bev-panel');
+    const bevVid = document.getElementById('vid-imggoal-bev');
+    const btn    = document.getElementById('imggoal-bev-btn');
+    const isVisible = panel.classList.contains('visible');
+    if (isVisible) {
+      panel.classList.remove('visible');
+      bevVid.pause();
+      btn.textContent = '🗺 Show bird\'s eye view';
+    } else {
+      panel.classList.add('visible');
+      const mainVid = document.getElementById('vid-imggoal');
+      bevVid.currentTime = mainVid.currentTime;
+      if (!mainVid.paused) bevVid.play().catch(() => {});
+      btn.textContent = '✕ Hide';
+    }
+  }
+  function hideImggoalBev() {
+    const panel = document.getElementById('imggoal-bev-panel');
+    document.getElementById('vid-imggoal-bev').pause();
+    panel.classList.remove('visible');
+    document.getElementById('imggoal-bev-btn').textContent = '🗺 Show bird\'s eye view';
+  }
+  document.getElementById('vid-imggoal').addEventListener('play', () => {
+    const p = document.getElementById('imggoal-bev-panel');
+    const v = document.getElementById('vid-imggoal-bev');
+    if (p.classList.contains('visible')) v.play().catch(() => {});
+  });
+  document.getElementById('vid-imggoal').addEventListener('pause', () => {
+    document.getElementById('vid-imggoal-bev').pause();
+  });
+
+  // ── explore button ───────────────────────────────────────────────────────
+  function startExplore(videoId, btn) {
+    const v = document.getElementById(videoId);
+    v.play();
+    btn.style.display = 'none';
+  }
+
+  // Reset explore videos when scrolled out of view or when they end
+  ['vid-spa', 'vid-spaceship', 'vid-training', 'vid-ctx1', 'vid-ours1', 'vid-icm', 'vid-apple', 'vid-imggoal'].forEach(id => {
+    const v = document.getElementById(id);
+    if (!v) return;
+    const btn = v.parentElement.querySelector('.explore-btn');
+
+    function resetExplore() {
+      v.pause();
+      v.currentTime = 0;
+      btn.style.display = 'flex';
+    }
+
+    // Remove loop so the ended event fires
+    v.removeAttribute('loop');
+
+    // On natural end: keep last frame, just show the button
+    v.addEventListener('ended', () => {
+      btn.style.display = 'flex';
+    });
+
+    // On scroll away: rewind and show button
+    new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (!e.isIntersecting && !v.paused) resetExplore();
+      });
+    }, { threshold: 0.1 }).observe(v);
+  });
+
+  // ── maps video selector ───────────────────────────────────────────────────
+  (function() {
+    let selMethod = 'ours';
+    let selScene  = 'scene1';
+
+    // Video files follow the pattern: assets/videos/maps_{method}_{scene}.mp4
+    // e.g. maps_ours_scene1.mp4, maps_ans-rgb_scene2.mp4
+    function updateMapsVideo() {
+      const vid   = document.getElementById('vid-maps');
+      const src   = document.getElementById('vid-maps-src');
+      const ph    = document.getElementById('vid-maps-placeholder');
+      const path  = `assets/videos/maps_${selMethod}_${selScene}.mp4`;
+      src.src = path;
+      vid.load();
+      // Show placeholder until the video loads successfully
+      ph.style.display = 'flex';
+      vid.addEventListener('loadeddata', function onLoad() {
+        ph.style.display = 'none';
+        vid.removeEventListener('loadeddata', onLoad);
+      });
+      vid.play().catch(() => {});
+    }
+
+    document.querySelectorAll('.sel-btn[data-group="maps-method"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.sel-btn[data-group="maps-method"]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selMethod = btn.dataset.val;
+        updateMapsVideo();
+      });
+    });
+
+    document.querySelectorAll('.sel-btn[data-group="maps-scene"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.sel-btn[data-group="maps-scene"]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selScene = btn.dataset.val;
+        updateMapsVideo();
+      });
+    });
+  })();
+
+  // ── ablation video selector ───────────────────────────────────────────────
+  (function() {
+    let selMethod = 'ours';
+
+    // Video files follow the pattern: assets/videos/ablation_{method}.mp4
+    function updateAblationVideo() {
+      const vid  = document.getElementById('vid-ablation');
+      const src  = document.getElementById('vid-ablation-src');
+      const ph   = document.getElementById('vid-ablation-placeholder');
+      src.src = `assets/videos/ablation_${selMethod}.mp4`;
+      vid.load();
+      ph.style.display = 'flex';
+      vid.addEventListener('loadeddata', function onLoad() {
+        ph.style.display = 'none';
+        vid.removeEventListener('loadeddata', onLoad);
+      });
+      vid.play().catch(() => {});
+    }
+
+    document.querySelectorAll('.sel-btn[data-group="ablation-method"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.sel-btn[data-group="ablation-method"]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selMethod = btn.dataset.val;
+        updateAblationVideo();
+      });
+    });
+  })();
+
+  function copyBibtex() {
+    navigator.clipboard.writeText(document.getElementById('bibtex-block').innerText).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+  }
+</script>
 </body>
 </html>
