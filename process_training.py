@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Produce two videos from training.mp4:
-  training_labeled.mp4  — 4-column main (RGB Obs, 3DGS, Reward, Bird's Eye)
-  training_action.mp4   — col5 only (Action Distribution, 260×360)
+  training_labeled.mp4  — 4-column main (RGB Obs, 3DGS, Reward, Gamepad)
+  training_bev.mp4      — col4 only (Bird's Eye View, 360×360)
 """
 
 import subprocess, os
@@ -93,12 +93,79 @@ def load_font(size, bold=False):
 label_font = load_font(20, bold=True)
 p_font     = load_font(12)
 
+# ── Gamepad rendering ────────────────────────────────────────────────────────
+# Sample centers for F/L/R/S in source col-5 (260×260 chart, center≈(130,130))
+_CHART_SAMPLES = {
+    'F': (130, 75),
+    'L': (75,  130),
+    'R': (185, 130),
+    'S': (130, 185),
+}
+_SAMPLE_R = 10   # half-side of averaging patch
+
+def read_action_probs(src, c5x):
+    """Return (F,L,R,S) brightness values from source col-5 quadrant chart."""
+    vals = {}
+    for action, (dx, dy) in _CHART_SAMPLES.items():
+        patch = src[dy-_SAMPLE_R:dy+_SAMPLE_R, c5x+dx-_SAMPLE_R:c5x+dx+_SAMPLE_R]
+        vals[action] = float(patch.mean())
+    return vals
+
+_BTN_W, _BTN_H = 72, 72
+_BTN_R = 12       # corner radius
+_BTN_COL_ACTIVE   = (59, 130, 246)    # blue
+_BTN_COL_INACTIVE = (210, 210, 210)   # light gray
+_ARROW_ACTIVE     = (255, 255, 255)
+_ARROW_INACTIVE   = (130, 130, 130)
+
+# Button centers inside the 260×(SRC_H-LABEL_H) panel
+_GAP_H = SRC_H - LABEL_H   # 328 px
+_CX    = C5_W // 2          # 130
+_BTN_UP    = (_CX,           85)
+_BTN_LEFT  = (_CX - 84,     175)
+_BTN_RIGHT = (_CX + 84,     175)
+
+def _arrow_polygon(cx, cy, direction, size=26):
+    h = size * 0.85
+    w = size * 0.65
+    if direction == 'up':
+        return [(cx, cy-h/2), (cx-w/2, cy+h/2), (cx+w/2, cy+h/2)]
+    if direction == 'left':
+        return [(cx-h/2, cy), (cx+h/2, cy-w/2), (cx+h/2, cy+w/2)]
+    if direction == 'right':
+        return [(cx+h/2, cy), (cx-h/2, cy-w/2), (cx-h/2, cy+w/2)]
+
+def render_gamepad(probs):
+    """Return a 260×SRC_H numpy RGB array with D-pad buttons."""
+    img  = Image.new("RGB", (C5_W, SRC_H), (255, 255, 255))
+    draw = ImageDraw.Draw(img)
+
+    max_action = max(('F','L','R'), key=lambda a: probs[a])
+
+    buttons = [
+        ('F', 'up',    _BTN_UP),
+        ('L', 'left',  _BTN_LEFT),
+        ('R', 'right', _BTN_RIGHT),
+    ]
+    for action, direction, (bcx, bcy) in buttons:
+        active = (action == max_action)
+        bx0, by0 = bcx - _BTN_W//2, bcy - _BTN_H//2
+        bx1, by1 = bx0 + _BTN_W,     by0 + _BTN_H
+        draw.rounded_rectangle([bx0, by0, bx1, by1],
+                               radius=_BTN_R,
+                               fill=(_BTN_COL_ACTIVE if active else _BTN_COL_INACTIVE))
+        pts = _arrow_polygon(bcx, bcy, direction, size=30)
+        draw.polygon([(int(x), int(y)) for x, y in pts],
+                     fill=(_ARROW_ACTIVE if active else _ARROW_INACTIVE))
+
+    return np.array(img)
+
 # Pre-compute label positions for 4-col main video (cols 1,2,3,5)
 MAIN_COLS = [
     ("RGB Observation",    D_C1, C1_W),
     ("3DGS Rendering",     D_C2, C2_W),
     ("Reward Signal",      D_C3, C3_W),
-    ("Action Distribution",D_C5, C5_W),
+    ("Actions",            D_C5, C5_W),
 ]
 _probe = ImageDraw.Draw(Image.new("RGB", (1,1)))
 main_labels = []
@@ -145,12 +212,14 @@ while True:
     src   = np.frombuffer(raw, dtype=np.uint8).reshape(SRC_H, SRC_W, 3)
     green = is_green_reward(src)
 
-    # ── Main video (cols 1,2,3,5) ────────────────────────────────────────────
-    main = np.zeros((OUT_H, OUT_W, 3), dtype=np.uint8)
+    # ── Main video (cols 1,2,3 + gamepad panel) ───────────────────────────────
+    main = np.full((OUT_H, OUT_W, 3), 255, dtype=np.uint8)
     main[:, D_C1:D_C1+C1_W] = src[:, C1_X:C1_X+C1_W]
     main[:, D_C2:D_C2+C2_W] = src[:, C2_X:C2_X+C2_W]
     main[:, D_C3:D_C3+C3_W] = src[:, C3_X:C3_X+C3_W]
-    main[:, D_C5:D_C5+C5_W] = src[:, C5_X:C5_X+C5_W]
+
+    probs = read_action_probs(src, C5_X)
+    main[:, D_C5:D_C5+C5_W] = render_gamepad(probs)
 
     paste_indicator(main, _ind_coins if green else _ind_cross)
 
