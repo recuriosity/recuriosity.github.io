@@ -137,6 +137,22 @@
     #teaser { margin: 44px 0 52px; }
     .teaser-wrap { position: relative; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.10); }
     .teaser-wrap video { width: 100%; display: block; }
+    /* ── video click-to-pause indicator ─────────────────────────────────── */
+    .vid-click-wrap { position: relative; }
+    .vid-pause-indicator {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 56px; height: 56px;
+      background: rgba(0,0,0,0.45);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .vid-pause-indicator svg { width: 24px; height: 24px; fill: #fff; }
+    .vid-pause-indicator.visible { opacity: 1; }
     #mute-btn {
       position: absolute;
       bottom: 14px; right: 14px;
@@ -213,16 +229,16 @@
     @media (max-width: calc(860px + 200px + 44px + 80px)) {
       #action-panel {
         position: static;
-        width: auto;
-        max-width: 360px;
-        margin: 8px auto 0;
+        width: 40%;
+        max-width: 220px;
+        margin: 10px auto 0;
         right: auto;
       }
       #imggoal-bev-panel {
         position: static;
-        width: auto;
-        max-width: 360px;
-        margin: 8px auto 0;
+        width: 40%;
+        max-width: 220px;
+        margin: 10px auto 0;
         right: auto;
       }
     }
@@ -710,17 +726,19 @@
   <div id="sec-maps" class="section">
     <h2>Maps are also cool but&nbsp;…</h2>
     <p>
-      Discuss the role of topdown maps and their limitations here.
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+      Some previous work [<a href="#ref10">10</a>,<a href="#ref11">11</a>] trains RL agents for exploration using a 2D map of the scene as input. This map is either built by a separate module, or obtained from depth sensing, as the agent explores. The agent's reward is then defined as the gain in coverage of this map. Although maps are useful persistent memories, map-based agents often over-prioritize floor coverage. In practice, this can lead to behavior where the agent spends too much time looking carefully at every corner and nook in a room, rather than moving on to discover new rooms. For methods that predict or complete the map, errors in the predicted map can also introduce noisy behavior into the policy. Finally, as we show in the next section, our model can be finetuned for downstream tasks that benefit from exploration because it relies on an implicit memory of the observed RGB sequence. Map-based methods, in contrast, are tied to a 2D abstraction that discards much of the scene semantics and 3D geometry, making adaptation to other tasks harder.
+    </p>
+    <p>
+      We compare against several map-based baselines below. Active Neural SLAM (ANS) [<a href="#ref10">10</a>] is a map-based exploration method that uses SLAM to localize the agent and build a 2D map, which is then fed to the policy network for action prediction. The RGB-only version performs SLAM from RGB observations by predicting depth, while the depth version uses depth from a sensor and projects it directly into a 2D map. Occupancy Anticipation (OccA) [<a href="#ref11">11</a>] is another map-based method built on top of ANS. Instead of only using the observed map, it predicts an anticipated occupancy map that completes regions beyond what the agent has already seen. OccA-RGBD uses RGB and depth to project observed regions into a 2D map before completing it, while OccA-RGB does not use depth input. Our method does not require depth at deployment time and operates only on the observed RGB sequence.
     </p>
     <!-- Method + Scene video selector -->
     <div class="vid-selector">
       <div class="vid-sel-btns" id="maps-method-btns">
         <button class="sel-btn active" data-group="maps-method" data-val="ours">Ours</button>
-        <button class="sel-btn" data-group="maps-method" data-val="ans-rgb">ANS-RGB</button>
-        <button class="sel-btn" data-group="maps-method" data-val="ans-depth">ANS-depth</button>
-        <button class="sel-btn" data-group="maps-method" data-val="occa-rgb">OccA-RGB</button>
-        <button class="sel-btn" data-group="maps-method" data-val="occa-rgbd">OccA-RGBD</button>
+        <button class="sel-btn" data-group="maps-method" data-val="ansrgb">ANS-RGB</button>
+        <button class="sel-btn" data-group="maps-method" data-val="ansdepth">ANS-depth</button>
+        <button class="sel-btn" data-group="maps-method" data-val="occargb">OccA-RGB</button>
+        <button class="sel-btn" data-group="maps-method" data-val="occargbd">OccA-RGBD</button>
       </div>
       <figure style="margin:0;">
         <div class="video-wrap" style="position:relative;">
@@ -730,6 +748,12 @@
           <div id="vid-maps-placeholder" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f0f0f0;">
             <span style="color:var(--light);font-size:0.9rem;">Video placeholder</span>
           </div>
+          <button id="maps-speed-btn" onclick="toggleMapsSpeed()" style="
+            position:absolute; top:8px; right:8px;
+            background:rgba(0,0,0,0.45); color:#fff;
+            border:none; border-radius:4px;
+            padding:2px 8px; font-size:0.75rem; cursor:pointer;
+            font-family: inherit; letter-spacing:0.03em;">speed: 1×</button>
         </div>
       </figure>
       <div class="vid-sel-btns" id="maps-scene-btns" style="margin-top:8px;">
@@ -737,9 +761,13 @@
         <button class="sel-btn" data-group="maps-scene" data-val="scene2">Scene 2</button>
         <button class="sel-btn" data-group="maps-scene" data-val="scene3">Scene 3</button>
       </div>
+      <p style="font-size:0.82rem; color:var(--muted); margin-top:8px; text-align:center;">
+        Exploration results on HM3D. 3D completeness is shown with 3D points from mesh surface (gray) marked seen (green) as soon as the agent looks at them (red beam).
+      </p>
     </div>
 
-    <table class="results-table" style="font-size:0.82rem;">
+    <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
+    <table class="results-table" style="font-size:0.82rem; min-width:600px;">
       <thead>
         <tr>
           <th rowspan="2" style="text-align:left; border-right:1px solid var(--border);">Step</th>
@@ -789,8 +817,9 @@
         </tr>
       </tbody>
     </table>
+    </div>
     <p style="font-size:0.8rem; color:var(--muted); margin-top:6px;">
-      Completeness % and average distance of each surface point to the closest visited point, on HM3D and Gibson benchmarks.
+      Completeness % and average distance of each surface point to the closest visited point, on HM3D and Gibson datasets, after 256, 512, and 1024 steps of exploration.
     </p>
   </div>
 
@@ -882,7 +911,7 @@
       </div>
     </div>
 
-    <div style="overflow-x:auto; margin-top:8px;">
+    <div style="overflow-x:auto; -webkit-overflow-scrolling:touch; margin-top:8px;">
       <table class="results-table" style="font-size:0.80rem; min-width:700px;">
         <thead>
           <tr>
@@ -1181,19 +1210,20 @@
     // Video files follow the pattern: assets/videos/maps_{method}_{scene}.mp4
     // e.g. maps_ours_scene1.mp4, maps_ans-rgb_scene2.mp4
     function updateMapsVideo() {
-      const vid   = document.getElementById('vid-maps');
-      const src   = document.getElementById('vid-maps-src');
-      const ph    = document.getElementById('vid-maps-placeholder');
-      const path  = `assets/videos/maps_${selMethod}_${selScene}.mp4`;
+      const vid = document.getElementById('vid-maps');
+      const src = document.getElementById('vid-maps-src');
+      const ph  = document.getElementById('vid-maps-placeholder');
+      const path = `assets/videos/comparison/${selScene}_${selMethod}.mp4`;
+      const currentRate = vid.playbackRate;
+      ph.style.display = 'flex';
       src.src = path;
       vid.load();
-      // Show placeholder until the video loads successfully
-      ph.style.display = 'flex';
-      vid.addEventListener('loadeddata', function onLoad() {
+      vid.addEventListener('canplay', function onCanPlay() {
         ph.style.display = 'none';
-        vid.removeEventListener('loadeddata', onLoad);
+        vid.playbackRate = currentRate;
+        vid.play().catch(() => {});
+        vid.removeEventListener('canplay', onCanPlay);
       });
-      vid.play().catch(() => {});
     }
 
     document.querySelectorAll('.sel-btn[data-group="maps-method"]').forEach(btn => {
@@ -1213,6 +1243,9 @@
         updateMapsVideo();
       });
     });
+
+    // Load initial video on page load
+    updateMapsVideo();
   })();
 
   // ── ablation video selector ───────────────────────────────────────────────
@@ -1221,17 +1254,17 @@
 
     // Video files follow the pattern: assets/videos/ablation_{method}.mp4
     function updateAblationVideo() {
-      const vid  = document.getElementById('vid-ablation');
-      const src  = document.getElementById('vid-ablation-src');
-      const ph   = document.getElementById('vid-ablation-placeholder');
+      const vid = document.getElementById('vid-ablation');
+      const src = document.getElementById('vid-ablation-src');
+      const ph  = document.getElementById('vid-ablation-placeholder');
+      ph.style.display = 'flex';
       src.src = `assets/videos/ablation_${selMethod}.mp4`;
       vid.load();
-      ph.style.display = 'flex';
-      vid.addEventListener('loadeddata', function onLoad() {
+      vid.addEventListener('canplay', function onCanPlay() {
         ph.style.display = 'none';
-        vid.removeEventListener('loadeddata', onLoad);
+        vid.play().catch(() => {});
+        vid.removeEventListener('canplay', onCanPlay);
       });
-      vid.play().catch(() => {});
     }
 
     document.querySelectorAll('.sel-btn[data-group="ablation-method"]').forEach(btn => {
@@ -1243,6 +1276,62 @@
       });
     });
   })();
+
+  // ── click-to-pause for all videos ────────────────────────────────────────
+  document.querySelectorAll('video').forEach(vid => {
+    // Wrap in a relative container if not already inside one
+    const parent = vid.parentElement;
+    if (!parent.classList.contains('vid-click-wrap') &&
+        !parent.classList.contains('video-wrap') &&
+        !parent.classList.contains('teaser-wrap')) {
+      const wrap = document.createElement('div');
+      wrap.className = 'vid-click-wrap';
+      wrap.style.position = 'relative';
+      parent.insertBefore(wrap, vid);
+      wrap.appendChild(vid);
+    }
+
+    // Add pause indicator
+    const indicator = document.createElement('div');
+    indicator.className = 'vid-pause-indicator';
+    indicator.innerHTML = `<svg viewBox="0 0 24 24"><rect x="5" y="4" width="4" height="16"/><rect x="15" y="4" width="4" height="16"/></svg>`;
+    vid.parentElement.appendChild(indicator);
+
+    let fadeTimer;
+    vid.style.cursor = 'pointer';
+
+    vid.addEventListener('click', e => {
+      // Don't interfere with explore-btn (button handles first play)
+      if (vid.paused && vid.currentTime === 0) return;
+      e.stopPropagation();
+      if (vid.paused) {
+        vid.play().catch(() => {});
+        indicator.classList.remove('visible');
+      } else {
+        vid.pause();
+        indicator.classList.add('visible');
+      }
+    });
+
+    // Hide indicator when video plays on its own
+    vid.addEventListener('play', () => {
+      clearTimeout(fadeTimer);
+      indicator.classList.remove('visible');
+    });
+  });
+
+  // ── maps video speed toggle ───────────────────────────────────────────────
+  function toggleMapsSpeed() {
+    const vid = document.getElementById('vid-maps');
+    const btn = document.getElementById('maps-speed-btn');
+    if (vid.playbackRate === 1) {
+      vid.playbackRate = 2;
+      btn.textContent = 'speed: 2×';
+    } else {
+      vid.playbackRate = 1;
+      btn.textContent = 'speed: 1×';
+    }
+  }
 
   function copyBibtex() {
     navigator.clipboard.writeText(document.getElementById('bibtex-block').innerText).then(() => {

@@ -2,6 +2,9 @@
 .DS_Store
 **/.DS_Store
 
+# Duplicate of index.html
+main.html
+
 # Audio source files (used for teaser generation only)
 assets/audio/
 
