@@ -399,7 +399,7 @@
     @media (max-width: 640px) {
       #header h1 { font-size: 1.55rem; }
       .fig-row { flex-direction: column; }
-      .inset-right { float: none; width: 100%; margin: 16px 0; }
+      .inset-right { float: right; margin: 4px 0 18px 18px; }
     }
   </style>
 </head>
@@ -879,8 +879,29 @@
   <div id="sec-analysis" class="section">
     <h2>Let's analyze the memory</h2>
     <p>
-      Provide analysis of the episodic memory here. Lorem ipsum dolor sit amet,
-      consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.
+      We ablate the importance of forward model persistence and agent memory in exploration.
+      The visualization below shows exploration results for pipelines where either world
+      persistence is ablated (top buttons) or agent memory is ablated (bottom buttons).
+    </p>
+    <p>
+      For world persistence, we replace 3DGS with the original ICM and show results for
+      ICM+RNN, the original setting in [<a href="#ref2">2</a>]; ICM+transformer, where the
+      agent keeps our transformer design and only the 3DGS forward model is swapped out for
+      ICM; and short-memory 3DGS, where the 3DGS model only retains Gaussians associated
+      with the last 64 steps at each time. The results show that world persistence is
+      significantly important for learning an effective exploration policy. Without it, the
+      agent tends to loop locally without moving farther into the scene.
+    </p>
+    <p>
+      For the agent's episodic memory, we swap out the transformer with an RNN of the same
+      parameter size (Ours RNN), then ablate the impact of context length for the actor, the
+      critic, or both. We remove context once for the critic (Critic with context=1) and
+      once for the actor (Actor with context=1). We then study how different context lengths
+      given to both networks affect the policy (context=1, 4, 16). The results show that
+      weaker forms of memory revisit already-seen areas more often, while still learning some
+      useful behaviors such as going through doors, but not remembering not to go back in.
+      Interestingly, giving full context to both the actor and the critic helps train a
+      stronger policy.
     </p>
     <!-- Ablation video selector -->
     <div class="vid-selector">
@@ -899,7 +920,6 @@
             <span style="color:var(--light);font-size:0.9rem;">Video placeholder</span>
           </div>
         </div>
-        <figcaption>Memory analysis visualization.</figcaption>
       </figure>
       <div class="vid-sel-btns" style="margin-top:8px;">
         <button class="sel-btn" data-group="ablation-method" data-val="ours-rnn">Ours RNN</button>
@@ -909,8 +929,20 @@
         <button class="sel-btn" data-group="ablation-method" data-val="both-ctx4">Both with context=4</button>
         <button class="sel-btn" data-group="ablation-method" data-val="both-ctx1">Both with context=1</button>
       </div>
+      <p style="font-size:0.82rem; color:var(--muted); margin-top:8px; text-align:center;">
+        Memory analysis visualization.
+      </p>
     </div>
 
+    <!-- Bar chart: Completeness %@1024 -->
+    <div style="margin-top:20px;">
+      <canvas id="ablation-chart" style="width:100%; max-width:700px; display:block; margin:0 auto;"></canvas>
+      <p style="font-size:0.8rem; color:var(--muted); margin-top:8px; text-align:center;">
+        Completeness %@1024 ↑ — ablation of forward model persistence and agent memory on HM3D.
+      </p>
+    </div>
+
+    <!--
     <div style="overflow-x:auto; -webkit-overflow-scrolling:touch; margin-top:8px;">
       <table class="results-table" style="font-size:0.80rem; min-width:700px;">
         <thead>
@@ -959,6 +991,7 @@
     <p style="font-size:0.8rem; color:var(--muted); margin-top:6px;">
       Ablation of memory context for the agent and forward model persistence on HM3D.
     </p>
+    -->
   </div>
 
   <!-- ── CITATION ───────────────────────────────────────────────────────── -->
@@ -1253,12 +1286,25 @@
     let selMethod = 'ours';
 
     // Video files follow the pattern: assets/videos/ablation_{method}.mp4
+    const ablationFiles = {
+      'ours':             'ours.mp4',
+      'icm-rnn':          'icm_rnn.mp4',
+      'icm-transformer':  'icm_transformer.mp4',
+      'short-memory-3dgs':'shortmemory_3dgs.mp4',
+      'ours-rnn':         'ours_rnn.mp4',
+      'actor-ctx1':       'actorctx1.mp4',
+      'critic-ctx1':      'criticctx1.mp4',
+      'both-ctx16':       'bothctx16.mp4',
+      'both-ctx4':        'bothctx4.mp4',
+      'both-ctx1':        'bothctx1.mp4',
+    };
+
     function updateAblationVideo() {
       const vid = document.getElementById('vid-ablation');
       const src = document.getElementById('vid-ablation-src');
       const ph  = document.getElementById('vid-ablation-placeholder');
       ph.style.display = 'flex';
-      src.src = `assets/videos/ablation_${selMethod}.mp4`;
+      src.src = `assets/videos/ablation/${ablationFiles[selMethod]}`;
       vid.load();
       vid.addEventListener('canplay', function onCanPlay() {
         ph.style.display = 'none';
@@ -1275,6 +1321,9 @@
         updateAblationVideo();
       });
     });
+
+    // Load initial video on page load
+    updateAblationVideo();
   })();
 
   // ── click-to-pause for all videos ────────────────────────────────────────
@@ -1332,6 +1381,105 @@
       btn.textContent = 'speed: 1×';
     }
   }
+
+  // ── ablation bar chart ────────────────────────────────────────────────────
+  (function() {
+    const data = [
+      { label: 'Ours',               value: 74.94, ours: true  },
+      { label: 'ICM+RNN',            value: 37.36, ours: false },
+      { label: 'ICM+transformer',    value: 43.44, ours: false },
+      { label: 'Short mem. 3DGS',   value: 38.09, ours: false },
+      { label: 'Ours RNN',           value: 67.33, ours: false },
+      { label: 'Actor ctx=1',        value: 70.11, ours: false },
+      { label: 'Critic ctx=1',       value: 63.72, ours: false },
+      { label: 'Both ctx=16',        value: 67.77, ours: false },
+      { label: 'Both ctx=4',         value: 60.56, ours: false },
+      { label: 'Both ctx=1',         value: 50.39, ours: false },
+    ];
+
+    const canvas = document.getElementById('ablation-chart');
+    if (!canvas) return;
+
+    const DPR    = window.devicePixelRatio || 1;
+    const W_CSS  = Math.min(canvas.parentElement.clientWidth, 700);
+    const PAD_L  = 52, PAD_R = 20, PAD_T = 24, PAD_B = 72;
+    const BAR_GAP = 6;
+    const n      = data.length;
+    const BAR_W  = Math.floor((W_CSS - PAD_L - PAD_R - BAR_GAP * (n - 1)) / n);
+    const H_CSS  = PAD_T + 220 + PAD_B;
+
+    canvas.width  = W_CSS * DPR;
+    canvas.height = H_CSS * DPR;
+    canvas.style.width  = W_CSS + 'px';
+    canvas.style.height = H_CSS + 'px';
+
+    const ctx = canvas.getContext('2d');
+    ctx.scale(DPR, DPR);
+
+    const MAX_VAL = 85;
+    const chartH  = H_CSS - PAD_T - PAD_B;
+
+    // grid lines
+    ctx.strokeStyle = '#e8e8e8';
+    ctx.lineWidth   = 1;
+    ctx.fillStyle   = '#888';
+    ctx.font        = `${11}px system-ui, sans-serif`;
+    ctx.textAlign   = 'right';
+    [0, 20, 40, 60, 80].forEach(v => {
+      const y = PAD_T + chartH * (1 - v / MAX_VAL);
+      ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(W_CSS - PAD_R, y); ctx.stroke();
+      ctx.fillText(v, PAD_L - 6, y + 4);
+    });
+
+    // y-axis label
+    ctx.save();
+    ctx.translate(12, PAD_T + chartH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#555';
+    ctx.font = `11px system-ui, sans-serif`;
+    ctx.fillText('Completeness % @1024', 0, 0);
+    ctx.restore();
+
+    // divider between persistence and memory ablations (after index 3)
+    const divX = PAD_L + 4 * (BAR_W + BAR_GAP) - BAR_GAP / 2;
+    ctx.strokeStyle = '#ccc';
+    ctx.setLineDash([4, 3]);
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(divX, PAD_T - 8); ctx.lineTo(divX, PAD_T + chartH + 4); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // group labels
+    ctx.fillStyle = '#999'; ctx.font = `10px system-ui`; ctx.textAlign = 'center';
+    ctx.fillText('World persistence', PAD_L + 2 * (BAR_W + BAR_GAP), PAD_T - 10);
+    ctx.fillText('Agent memory', PAD_L + (4 + 3) * (BAR_W + BAR_GAP), PAD_T - 10);
+
+    // bars
+    data.forEach((d, i) => {
+      const x   = PAD_L + i * (BAR_W + BAR_GAP);
+      const bh  = chartH * (d.value / MAX_VAL);
+      const y   = PAD_T + chartH - bh;
+
+      ctx.fillStyle = d.ours ? '#3b82f6' : '#93c5fd';
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(x, y, BAR_W, bh, [3, 3, 0, 0])
+                    : ctx.rect(x, y, BAR_W, bh);
+      ctx.fill();
+
+      // value label above bar
+      ctx.fillStyle = '#333'; ctx.font = `bold 10px system-ui`; ctx.textAlign = 'center';
+      ctx.fillText(d.value.toFixed(1), x + BAR_W / 2, y - 4);
+
+      // x-axis label (rotated)
+      ctx.save();
+      ctx.translate(x + BAR_W / 2, PAD_T + chartH + 8);
+      ctx.rotate(Math.PI / 4);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#555'; ctx.font = `11px system-ui`;
+      ctx.fillText(d.label, 0, 0);
+      ctx.restore();
+    });
+  })();
 
   function copyBibtex() {
     navigator.clipboard.writeText(document.getElementById('bibtex-block').innerText).then(() => {
