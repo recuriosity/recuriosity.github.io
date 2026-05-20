@@ -199,74 +199,6 @@
     .inset-right figcaption { font-size: 0.78rem; color: var(--muted); margin-top: 6px; line-height: 1.45; text-align: center; }
     .clearfix::after { content: ''; display: table; clear: both; }
 
-    /* ── training action panel ───────────────────────────────────────────── */
-    .training-wrap { position: relative; }
-    #action-panel {
-      position: absolute;
-      top: 0;
-      right: calc(-1 * (var(--toc-gap) + var(--toc-w) + 8px));
-      width: 160px;
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      overflow: hidden;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.10);
-      display: none;
-      flex-direction: column;
-    }
-    #action-panel.visible { display: flex; }
-    #action-panel video { width: 100%; display: block; }
-    #action-panel .action-close {
-      position: absolute;
-      top: 4px; right: 4px;
-      background: rgba(0,0,0,0.45);
-      border: none; border-radius: 50%;
-      width: 20px; height: 20px;
-      cursor: pointer; color: #fff;
-      font-size: 0.7rem; line-height: 20px; text-align: center;
-    }
-    /* mobile: panel below the video */
-    @media (max-width: calc(860px + 200px + 44px + 80px)) {
-      #action-panel {
-        position: static;
-        width: 40%;
-        max-width: 220px;
-        margin: 10px auto 0;
-        right: auto;
-      }
-      #imggoal-bev-panel {
-        position: static;
-        width: 40%;
-        max-width: 220px;
-        margin: 10px auto 0;
-        right: auto;
-      }
-    }
-    .imggoal-wrap { position: relative; }
-    #imggoal-bev-panel {
-      position: absolute;
-      top: 0;
-      right: calc(-1 * (var(--toc-gap) + var(--toc-w) + 8px));
-      width: 160px;
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      overflow: hidden;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.10);
-      display: none;
-      flex-direction: column;
-    }
-    #imggoal-bev-panel.visible { display: flex; }
-    #imggoal-bev-panel video { width: 100%; display: block; }
-    #imggoal-bev-panel .action-close {
-      position: absolute;
-      top: 4px; right: 4px;
-      background: rgba(0,0,0,0.45);
-      border: none; border-radius: 50%;
-      width: 20px; height: 20px;
-      cursor: pointer; color: #fff;
-      font-size: 0.7rem; line-height: 20px; text-align: center;
-    }
 
     figure { margin: 24px 0; text-align: center; }
     figure img, figure video { width: 100%; border-radius: 6px; display: block; border: 1px solid var(--border); }
@@ -423,7 +355,7 @@
     <div class="affiliations">
       <sup>1</sup> University of Toronto &nbsp;·&nbsp;
       <sup>2</sup> UC Berkeley &nbsp;·&nbsp;
-      <sup>3</sup> Wayve Labs &nbsp;·&nbsp;
+      <sup>3</sup> Wayve &nbsp;·&nbsp;
       <sup>4</sup> Vector Institute &nbsp;·&nbsp;
       <sup>5</sup> Simon Fraser University
     </div>
@@ -593,7 +525,7 @@
       Splatting (3DGS), updating the scene representation online as new views arrive.
     </p>
 
-    <figure class="training-wrap">
+    <figure>
       <div class="video-wrap">
         <video id="vid-training" muted playsinline>
           <source src="assets/videos/training_labeled.mp4" type="video/mp4">
@@ -602,26 +534,11 @@
           <span>&gt; explore</span>
         </button>
       </div>
-
-      <!-- Action distribution panel: shown on Bird's Eye View click -->
-      <div id="action-panel">
-        <video id="vid-action" muted loop playsinline>
-          <source src="assets/videos/training_bev.mp4" type="video/mp4">
-        </video>
-        <button class="action-close" onclick="hideActionPanel()" title="Close">✕</button>
-      </div>
-
       <figcaption>
         3DGS model remains persistent and updates as new observations are made.
         The reward is derived from comparing the 3DGS rendering and the observation
-        (coins icon shows positive reward). Agent takes forward (F) step, looks right (R)
-        or left (L) or pauses (P); brighter color shows higher probability of the action.
-        <button onclick="toggleActionPanel()" id="action-toggle-btn"
-                style="margin-left:8px; font-size:0.8rem; padding:2px 10px;
-                       border:1px solid var(--border); border-radius:4px;
-                       background:var(--sec-bg); cursor:pointer; color:var(--muted);">
-          🗺 Show bird's eye view
-        </button>
+        (coins icon shows positive reward). The D-pad buttons highlight the action with
+        highest probability: forward (↑), turn left (◀), or turn right (▶).
       </figcaption>
     </figure>
 
@@ -842,7 +759,7 @@
       <figcaption><strong>Pick the apple.</strong> Agent finetuned to pick up apples in the scene.</figcaption>
     </figure>
     <p>or to fetch a user-specified image view in the scene:</p>
-    <figure class="imggoal-wrap">
+    <figure>
       <div class="video-wrap explore-wrap" style="position:relative;">
         <video id="vid-imggoal" muted loop playsinline>
           <source src="assets/videos/image-goal-main.mp4" type="video/mp4">
@@ -851,23 +768,7 @@
           <span>&gt; find image</span>
         </button>
       </div>
-
-      <!-- Bird's eye view panel -->
-      <div id="imggoal-bev-panel">
-        <video id="vid-imggoal-bev" muted loop playsinline>
-          <source src="assets/videos/image-goal-bev.mp4" type="video/mp4">
-        </video>
-        <button class="action-close" onclick="hideImggoalBev()" title="Close">✕</button>
-      </div>
-
-      <figcaption><strong>Find the image.</strong> Agent finetuned for image-goal navigation.
-        <button onclick="toggleImggoalBev()" id="imggoal-bev-btn"
-                style="margin-left:8px; font-size:0.8rem; padding:2px 10px;
-                       border:1px solid var(--border); border-radius:4px;
-                       background:var(--sec-bg); cursor:pointer; color:var(--muted);">
-          🗺 Show bird's eye view
-        </button>
-      </figcaption>
+      <figcaption><strong>Find the image.</strong> Agent finetuned for image-goal navigation.</figcaption>
     </figure>
     <p>
       For the image-goal task, the image condition is given as an extra context frame to the
@@ -1091,7 +992,7 @@
 </nav>
 
 <footer>
-  &copy; 2025 The Authors.
+  &copy; 2025 Lily Goli
 </footer>
 
 <script>
@@ -1133,72 +1034,7 @@
   }
 
   // ── copy BibTeX ──────────────────────────────────────────────────────────
-  // ── action distribution panel ────────────────────────────────────────────
-  function toggleActionPanel() {
-    const panel = document.getElementById('action-panel');
-    const actVid = document.getElementById('vid-action');
-    const btn = document.getElementById('action-toggle-btn');
-    const isVisible = panel.classList.contains('visible');
-    if (isVisible) {
-      panel.classList.remove('visible');
-      actVid.pause();
-      btn.textContent = '🗺 Show bird\'s eye view';
-    } else {
-      panel.classList.add('visible');
-      const mainVid = document.getElementById('vid-training');
-      actVid.currentTime = mainVid.currentTime;
-      if (!mainVid.paused) actVid.play().catch(() => {});
-      btn.textContent = '✕ Hide';
-    }
-  }
-  function hideActionPanel() {
-    const panel = document.getElementById('action-panel');
-    document.getElementById('vid-action').pause();
-    panel.classList.remove('visible');
-    document.getElementById('action-toggle-btn').textContent = '🗺 Show bird\'s eye view';
-  }
-  // Sync action panel video with main training video
-  document.getElementById('vid-training').addEventListener('play', () => {
-    const p = document.getElementById('action-panel');
-    const v = document.getElementById('vid-action');
-    if (p.classList.contains('visible')) v.play().catch(() => {});
-  });
-  document.getElementById('vid-training').addEventListener('pause', () => {
-    document.getElementById('vid-action').pause();
-  });
 
-  // ── image-goal BEV panel ─────────────────────────────────────────────────
-  function toggleImggoalBev() {
-    const panel  = document.getElementById('imggoal-bev-panel');
-    const bevVid = document.getElementById('vid-imggoal-bev');
-    const btn    = document.getElementById('imggoal-bev-btn');
-    const isVisible = panel.classList.contains('visible');
-    if (isVisible) {
-      panel.classList.remove('visible');
-      bevVid.pause();
-      btn.textContent = '🗺 Show bird\'s eye view';
-    } else {
-      panel.classList.add('visible');
-      const mainVid = document.getElementById('vid-imggoal');
-      bevVid.currentTime = mainVid.currentTime;
-      if (!mainVid.paused) bevVid.play().catch(() => {});
-      btn.textContent = '✕ Hide';
-    }
-  }
-  function hideImggoalBev() {
-    const panel = document.getElementById('imggoal-bev-panel');
-    document.getElementById('vid-imggoal-bev').pause();
-    panel.classList.remove('visible');
-    document.getElementById('imggoal-bev-btn').textContent = '🗺 Show bird\'s eye view';
-  }
-  document.getElementById('vid-imggoal').addEventListener('play', () => {
-    const p = document.getElementById('imggoal-bev-panel');
-    const v = document.getElementById('vid-imggoal-bev');
-    if (p.classList.contains('visible')) v.play().catch(() => {});
-  });
-  document.getElementById('vid-imggoal').addEventListener('pause', () => {
-    document.getElementById('vid-imggoal-bev').pause();
-  });
 
   // ── explore button ───────────────────────────────────────────────────────
   function startExplore(videoId, btn) {
