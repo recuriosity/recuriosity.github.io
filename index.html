@@ -218,6 +218,13 @@
       transition: background 0.2s;
     }
     .explore-btn:hover { background: rgba(0,0,0,0.18); }
+    .explore-speed-btn {
+      position: absolute; bottom: 8px; right: 8px;
+      background: rgba(0,0,0,0.45); color: #fff;
+      border: none; border-radius: 4px; padding: 3px 8px;
+      font-size: 0.75rem; cursor: pointer; z-index: 5;
+      display: none;
+    }
     .explore-btn span {
       font-family: 'Courier New', Courier, monospace;
       font-size: 1.25rem;
@@ -394,7 +401,7 @@
   <div id="sec-curiosity" class="section clearfix">
     <h2>What is curiosity?</h2>
 
-    <figure class="inset-right">
+    <figure class="inset-right" style="width:52%;">
       <img src="assets/images/rl_usual.png" alt="Standard RL agent">
     </figure>
 
@@ -414,7 +421,7 @@
       <a href="#ref2">[2]</a>.
     </p>
 
-    <figure class="inset-right">
+    <figure class="inset-right" style="width:52%;">
       <img src="assets/images/rl_curious.png" alt="Curious RL agent">
     </figure>
 
@@ -452,6 +459,7 @@
         <button class="explore-btn" onclick="startExplore('vid-spa', this)" aria-label="Play video">
           <span>&gt; explore</span>
         </button>
+        <button class="explore-speed-btn" onclick="toggleExploreSpeed('vid-spa', this)">speed: 0.7×</button>
       </div>
       <figcaption>Exploring a hotel spa.</figcaption>
     </figure>
@@ -468,6 +476,7 @@
         <button class="explore-btn" onclick="startExplore('vid-spaceship', this)" aria-label="Play video">
           <span>&gt; explore</span>
         </button>
+        <button class="explore-speed-btn" onclick="toggleExploreSpeed('vid-spaceship', this)">speed: 0.7×</button>
       </div>
       <figcaption>Generalizing to an AI-generated spaceship world from World Labs.</figcaption>
     </figure>
@@ -504,6 +513,7 @@
         <button class="explore-btn" onclick="startExplore('vid-icm', this)" aria-label="Play video">
           <span>&gt; explore</span>
         </button>
+        <button class="explore-speed-btn" onclick="toggleExploreSpeed('vid-icm', this)">speed: 0.7×</button>
       </div>
       <figcaption>
         Agent trained with ICM collapses into repeated loops because the forward model is
@@ -533,6 +543,7 @@
         <button class="explore-btn" onclick="startExplore('vid-training', this)" aria-label="Play video">
           <span>&gt; explore</span>
         </button>
+        <button class="explore-speed-btn" onclick="toggleExploreSpeed('vid-training', this)">speed: 0.7×</button>
       </div>
       <figcaption>
         3DGS model remains persistent and updates as new observations are made.
@@ -550,8 +561,8 @@
       policy in a new scene.
     </p>
 
-    <details>
-      <summary>Why not use generative world models (yet)?</summary>
+    <div style="border:1px solid var(--border); border-radius:6px; padding:14px 18px; background:var(--sec-bg); margin:16px 0;">
+      <p style="font-size:0.92rem; font-weight:500; margin:0 0 10px;">Why not use generative world models (yet)?</p>
       <p>
         Generative world models have made impressive progress. However, for exploration,
         persistence is essential: once an area has been seen, the model should remember it
@@ -560,16 +571,16 @@
         through the world. While current models are improving quickly, we find that they are
         not yet persistent in this sense, and they cannot easily integrate feedback from new
         observations during exploration <a href="#ref4">[4]</a>.
-        <figure class="inset-right" style="width:32%; margin-top:-30px;">
+        <figure class="inset-right" style="width:42%; margin-top:-40px;">
           <video autoplay muted loop playsinline style="width:100%; border-radius:6px; border:1px solid var(--border); display:block;">
             <source src="assets/videos/lingbot_hold.mp4" type="video/mp4">
           </video>
         </figure>
-        Here is a video generated from Lingbot with a 360 turn, conditioned on the first image,
-        showing the first frame is not preserved as the turn finishes.
+        Here is a video generated from Lingbot with a 360 turn (video played back and forth),
+        conditioned on the first image, showing the first frame is not preserved as the turn finishes.
         However, they hold great promise for exploration in dynamic 3D scenes as they continue to improve.
       </p>
-    </details>
+    </div>
   </div>
 
   <!-- ── SECTION 3: Agent's gotta remember too! ────────────────────────── -->
@@ -597,6 +608,7 @@
         <button class="explore-btn" onclick="startExplore('vid-ctx1', this)" aria-label="Play video">
           <span>&gt; explore</span>
         </button>
+        <button class="explore-speed-btn" onclick="toggleExploreSpeed('vid-ctx1', this)">speed: 0.7×</button>
       </div>
       <figcaption>Agent without episodic memory, falling into repeated loops.</figcaption>
     </figure>
@@ -634,6 +646,7 @@
         <button class="explore-btn" onclick="startExplore('vid-ours1', this)" aria-label="Play video">
           <span>&gt; explore</span>
         </button>
+        <button class="explore-speed-btn" onclick="toggleExploreSpeed('vid-ours1', this)">speed: 0.7×</button>
       </div>
       <figcaption>Our agent exploring the same scene effectively equipped with episodic context and trained with a persistent forward model.</figcaption>
     </figure>
@@ -755,6 +768,7 @@
         <button class="explore-btn" onclick="startExplore('vid-apple', this)" aria-label="Play video">
           <span>&gt; pick apple</span>
         </button>
+        <button class="explore-speed-btn" onclick="toggleExploreSpeed('vid-apple', this)">speed: 0.7×</button>
       </div>
       <figcaption><strong>Pick the apple.</strong> Agent finetuned to pick up apples in the scene.</figcaption>
     </figure>
@@ -767,6 +781,7 @@
         <button class="explore-btn" onclick="startExplore('vid-imggoal', this)" aria-label="Play video">
           <span>&gt; find image</span>
         </button>
+        <button class="explore-speed-btn" onclick="toggleExploreSpeed('vid-imggoal', this)">speed: 0.7×</button>
       </div>
       <figcaption><strong>Find the image.</strong> Agent finetuned for image-goal navigation.</figcaption>
     </figure>
@@ -820,6 +835,11 @@
           <div id="vid-ablation-placeholder" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f0f0f0;">
             <span style="color:var(--light);font-size:0.9rem;">Video placeholder</span>
           </div>
+          <button id="ablation-speed-btn" onclick="toggleAblationSpeed()" style="
+            position:absolute; top:8px; right:8px;
+            background:rgba(0,0,0,0.45); color:#fff;
+            border:none; border-radius:4px; padding:3px 8px;
+            font-size:0.75rem; cursor:pointer;">speed: 1×</button>
         </div>
       </figure>
       <div class="vid-sel-btns" style="margin-top:8px;">
@@ -1039,8 +1059,22 @@
   // ── explore button ───────────────────────────────────────────────────────
   function startExplore(videoId, btn) {
     const v = document.getElementById(videoId);
+    v.playbackRate = 0.7;
     v.play();
     btn.style.display = 'none';
+    const speedBtn = v.parentElement.querySelector('.explore-speed-btn');
+    if (speedBtn) speedBtn.style.display = 'block';
+  }
+
+  function toggleExploreSpeed(videoId, btn) {
+    const v = document.getElementById(videoId);
+    if (v.playbackRate < 0.8) {
+      v.playbackRate = 1;   btn.textContent = 'speed: 1×';
+    } else if (v.playbackRate < 1.5) {
+      v.playbackRate = 2;   btn.textContent = 'speed: 2×';
+    } else {
+      v.playbackRate = 0.7; btn.textContent = 'speed: 0.7×';
+    }
   }
 
   // Reset explore videos when scrolled out of view or when they end
@@ -1052,7 +1086,10 @@
     function resetExplore() {
       v.pause();
       v.currentTime = 0;
+      v.playbackRate = 0.7;
       btn.style.display = 'flex';
+      const speedBtn = v.parentElement.querySelector('.explore-speed-btn');
+      if (speedBtn) { speedBtn.textContent = 'speed: 0.7×'; speedBtn.style.display = 'none'; }
     }
 
     // Remove loop so the ended event fires
@@ -1139,11 +1176,13 @@
       const vid = document.getElementById('vid-ablation');
       const src = document.getElementById('vid-ablation-src');
       const ph  = document.getElementById('vid-ablation-placeholder');
+      const currentRate = vid.playbackRate;
       ph.style.display = 'flex';
       src.src = `assets/videos/ablation/${ablationFiles[selMethod]}`;
       vid.load();
       vid.addEventListener('canplay', function onCanPlay() {
         ph.style.display = 'none';
+        vid.playbackRate = currentRate;
         vid.play().catch(() => {});
         vid.removeEventListener('canplay', onCanPlay);
       });
@@ -1209,12 +1248,23 @@
   function toggleMapsSpeed() {
     const vid = document.getElementById('vid-maps');
     const btn = document.getElementById('maps-speed-btn');
-    if (vid.playbackRate === 1) {
-      vid.playbackRate = 2;
-      btn.textContent = 'speed: 2×';
+    if (vid.playbackRate < 0.8) {
+      vid.playbackRate = 1; btn.textContent = 'speed: 1×';
+    } else if (vid.playbackRate < 1.5) {
+      vid.playbackRate = 2; btn.textContent = 'speed: 2×';
     } else {
-      vid.playbackRate = 1;
-      btn.textContent = 'speed: 1×';
+      vid.playbackRate = 0.7; btn.textContent = 'speed: 0.7×';
+    }
+  }
+  function toggleAblationSpeed() {
+    const vid = document.getElementById('vid-ablation');
+    const btn = document.getElementById('ablation-speed-btn');
+    if (vid.playbackRate < 0.8) {
+      vid.playbackRate = 1; btn.textContent = 'speed: 1×';
+    } else if (vid.playbackRate < 1.5) {
+      vid.playbackRate = 2; btn.textContent = 'speed: 2×';
+    } else {
+      vid.playbackRate = 0.7; btn.textContent = 'speed: 0.7×';
     }
   }
 
