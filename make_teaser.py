@@ -430,7 +430,7 @@ class VideoStream:
 
 
 # ── composition ────────────────────────────────────────────────────────────────
-GRID_ORDER = [1, 2, 3, 4, 0, 7, 9, 7, 11]  # mid-right=8.mp4, bottom-left=10.mp4, bottom-right=12.mp4
+GRID_ORDER = [1, 2, 3, 4, 0, 7, 9, 6, 11]  # mid-right=8.mp4, bottom-left=10.mp4, bottom-right=12.mp4
 
 def compose_center(sf):
     """Fallback: upscale 640×360 obs from combined source (used for grid cells only)."""
@@ -459,19 +459,44 @@ def area_downscale_3x(img):
     r = r.reshape(h//3, w//3, 3, c).mean(axis=2)
     return r.astype(np.uint8)
 
+def crop_map_content(map_src, pad=4):
+    """Crop a map frame to its non-white content bounding box, with a small pad."""
+    gray = map_src.mean(axis=2)
+    mask = gray < 240          # non-white pixels
+    rows = np.where(mask.any(axis=1))[0]
+    cols = np.where(mask.any(axis=0))[0]
+    if len(rows) == 0 or len(cols) == 0:
+        return map_src         # fully white — return as-is
+    r0 = max(rows[0]  - pad, 0)
+    r1 = min(rows[-1] + pad + 1, map_src.shape[0])
+    c0 = max(cols[0]  - pad, 0)
+    c1 = min(cols[-1] + pad + 1, map_src.shape[1])
+    return map_src[r0:r1, c0:c1]
+
 def compose_grid(frames, center_hq_obs=None, center_hq_map=None):
     """center_hq_obs/map: optional highres arrays for the grid centre cell (position 4)."""
     cells = []
     for idx, vi in enumerate(GRID_ORDER):
         if idx == 4 and center_hq_obs is not None:
             obs = area_downscale_3x(center_hq_obs)      # 1920×1080 → 640×360
-            pip = downscale_3x(center_hq_map)           # 360×360  → 120×120 (keep same as fullscreen)
-            obs[:MAP_PIP, CW-MAP_PIP:] = pip
+            pip = resize_bilinear(center_hq_map, MAP_PIP_GRID, MAP_PIP_GRID)
+            obs[:MAP_PIP_GRID, CW-MAP_PIP_GRID:] = pip
         else:
             obs = frames[vi][:CH, :CW].copy()
-            # use larger pip for grid cells so maps don't become tiny
+            # Crop map to its content bounding box so sparse maps fill the PIP
             map_src = frames[vi][:CH, 648:1008]         # 360×360 crop
-            pip = resize_bilinear(map_src, MAP_PIP_GRID, MAP_PIP_GRID)
+            if vi in (6, 7):  # sparse map videos — crop to content, preserve aspect ratio
+                map_cropped = crop_map_content(map_src)
+                ch, cw = map_cropped.shape[:2]
+                scale = MAP_PIP_GRID / max(ch, cw)
+                th, tw = int(round(ch * scale)), int(round(cw * scale))
+                resized = resize_bilinear(map_cropped, th, tw)
+                pip = np.full((MAP_PIP_GRID, MAP_PIP_GRID, 3), 255, dtype=np.uint8)
+                yo = (MAP_PIP_GRID - th) // 2
+                xo = (MAP_PIP_GRID - tw) // 2
+                pip[yo:yo+th, xo:xo+tw] = resized
+            else:
+                pip = resize_bilinear(map_src, MAP_PIP_GRID, MAP_PIP_GRID)
             obs[:MAP_PIP_GRID, CW-MAP_PIP_GRID:] = pip
         cells.append(obs)
     rows = [np.concatenate(cells[r*3:(r+1)*3], axis=1) for r in range(3)]

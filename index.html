@@ -218,6 +218,7 @@
       transition: background 0.2s;
     }
     .explore-btn:hover { background: rgba(0,0,0,0.18); }
+    #method-slide-btn:hover { background: rgba(0,0,0,0.50) !important; }
     .explore-speed-btn {
       position: absolute; bottom: 8px; right: 8px;
       background: rgba(0,0,0,0.45); color: #fff;
@@ -389,6 +390,9 @@
       <video id="teaser-video" loop playsinline muted>
         <source src="assets/videos/teaser/teaser.mp4" type="video/mp4">
       </video>
+      <div id="teaser-pause-indicator" class="vid-pause-indicator">
+        <svg viewBox="0 0 24 24"><rect x="5" y="4" width="4" height="16"/><rect x="15" y="4" width="4" height="16"/></svg>
+      </div>
       <button id="mute-btn" onclick="toggleMute()" title="Toggle sound">🔇</button>
     </div>
     <p class="caption">
@@ -413,7 +417,7 @@
 
     <p>
       But in many tasks, defining this reward is not straightforward, and even when a
-      reward exists, it may be sparse. This is where curiosity enters the scene. Think of
+      reward exists, the agent may rarely encounter it, a problem known as sparse rewards. This is where curiosity enters the scene. Think of
       a toddler in a playground: no one explicitly rewards them for figuring out how a toy
       works, yet they keep poking, turning, stacking, and exploring. What drives them is
       their own curiosity about how things behave and what else might be around them. This
@@ -480,6 +484,12 @@
       </div>
       <figcaption>Generalizing to an AI-generated spaceship world from World Labs.</figcaption>
     </figure>
+
+    <div style="background:#fdf0f4; border-left:4px solid #e8a0b4; border-radius:6px; padding:14px 18px; margin:24px 0; font-size:0.97rem; line-height:1.65;">
+      We revisit curiosity to make it work for long episodes of exploration in realistic 3D scenes.
+      Previous curiosity models struggle in this seemingly simple setting, and we identify two key issues: the lack of
+      <strong>episodic persistence</strong> in both the forward model and the agent.
+    </div>
   </div>
 
   <!-- ── SECTION 2: The forward model ──────────────────────────────────── -->
@@ -522,8 +532,8 @@
     </figure>
 
     <p>
-      Count-based methods <a href="#ref6">[6]</a>, <a href="#ref7">[7]</a> try to address
-      this by counting which states have been visited. But in realistic 3D environments,
+      Some approaches have considered "counting" how many times you have been to a specific state <a href="#ref6">[6]</a>, <a href="#ref7">[7]</a>, but
+      in realistic 3D environments,
       the state is continuous and high-dimensional, so reducing it to a discrete count can
       throw away much of the structure of the world.
     </p>
@@ -531,8 +541,8 @@
     <p>
       We instead use a persistent forward model for static scenes. The model acts as a memory
       that remains reliable throughout the episode and can immediately integrate new
-      observations as the agent explores. We implement this memory with 3D Gaussian
-      Splatting (3DGS), updating the scene representation online as new views arrive.
+      observations as the agent explores.       We implement this memory with 3D Gaussian
+      Splatting (3DGS) <a href="#ref8">[8]</a>, updating the scene representation online as new views arrive.
     </p>
 
     <figure>
@@ -556,13 +566,13 @@
     <p>
       The rendering error of each frame before that observation is integrated into 3DGS
       shows the novelty reward and guides the exploration policy. Importantly,
-      <strong>the forward model is only an auxiliary module during training.</strong>
+      <strong>the forward model is only used during training.</strong>
       At deployment time, it is discarded, and only the agent runs its learned exploration
       policy in a new scene.
     </p>
 
     <div style="border:1px solid var(--border); border-radius:6px; padding:14px 18px; background:var(--sec-bg); margin:16px 0;">
-      <p style="font-size:0.92rem; font-weight:500; margin:0 0 10px;">Why not use generative world models (yet)?</p>
+      <p style="font-size:0.92rem; font-weight:500; margin:0 0 10px;">Why not use video generative models (yet)?</p>
       <p>
         Generative world models have made impressive progress. However, for exploration,
         persistence is essential: once an area has been seen, the model should remember it
@@ -571,7 +581,7 @@
         through the world. While current models are improving quickly, we find that they are
         not yet persistent in this sense, and they cannot easily integrate feedback from new
         observations during exploration <a href="#ref4">[4]</a>.
-        <figure class="inset-right" style="width:42%; margin-top:-40px;">
+        <figure class="inset-right" style="width:42%; margin-top:-25px;">
           <video autoplay muted loop playsinline style="width:100%; border-radius:6px; border:1px solid var(--border); display:block;">
             <source src="assets/videos/lingbot_hold.mp4" type="video/mp4">
           </video>
@@ -596,8 +606,7 @@
     </p>
 
     <p>
-      Previous approaches often give the agent only a weak recurrent memory, such as an
-      LSTM, or no explicit memory mechanism at all [<a href="#ref1">1</a>,<a href="#ref8">8</a>,<a href="#ref9">9</a>]. In 3D exploration, this can lead to
+      Previous approaches often give the agent only a weak recurrent memory or no explicit memory mechanism at all [<a href="#ref2">2</a>,<a href="#ref9">9</a>,<a href="#ref10">10</a>]. In 3D exploration, this can lead to
       degenerate policies where the agent falls into loops, repeatedly returning to rooms
       it has already visited because it does not remember being there before.
     </p>
@@ -624,12 +633,32 @@
       To keep the model efficient, we use sliding-window attention, which limits the cost
       of attending over long trajectories, but weakens the connection to distant history.
       Therefore, we augment every few attention layers with a linear attention layer,
-      inspired by TTT-style memory, to keep global context available.
+      inspired by TTT-style memory <a href="#ref13">[13]</a>, to keep global context available.
     </p>
 
     <figure>
-      <img src="assets/images/method.png" alt="Model architecture diagram">
-      <figcaption>Architecture of our context-aware exploration agent.</figcaption>
+      <div id="method-slider-wrap" style="
+        position: relative; overflow: hidden;
+        border-radius: 6px; border: 1px solid var(--border);
+        cursor: pointer;">
+        <img id="method-slide-img" src="assets/images/method-long.png"
+             alt="Model architecture diagram"
+                    style="width: 147%; max-width: none; display: block;
+                    transform: translateX(0);
+                    transition: transform 0.7s cubic-bezier(0.4,0,0.2,1);">
+        <button id="method-slide-btn" onclick="slideMethod()" style="
+          position: absolute; right: 1px; top: 45%;
+          transform: translateY(-50%);
+          background: rgba(0,0,0,0.28); color: #111;
+          border: none; border-radius: 999px;
+          padding: 5px 10px; cursor: pointer;
+          font-size: 0.74rem; font-weight: 600; letter-spacing: 0.03em;
+          display: flex; align-items: center; gap: 4px;
+          transition: background 0.2s;">
+          <span id="method-slide-arrow">▶</span>
+        </button>
+      </div>
+      <figcaption>Architecture of our context-aware exploration agent. Click to reveal the action and world model.</figcaption>
     </figure>
 
     <p>
@@ -656,11 +685,10 @@
   <div id="sec-maps" class="section">
     <h2>Maps are also cool but&nbsp;…</h2>
     <p>
-      Some previous work [<a href="#ref10">10</a>,<a href="#ref11">11</a>] trains RL agents for exploration using a 2D map of the scene as input. This map is either built by a separate module, or obtained from depth sensing, as the agent explores. The agent's reward is then defined as the gain in coverage of this map. Although maps are useful persistent memories, map-based agents often over-prioritize floor coverage. In practice, this can lead to behavior where the agent spends too much time looking carefully at every corner and nook in a room, rather than moving on to discover new rooms. For methods that predict or complete the map, errors in the predicted map can also introduce noisy behavior into the policy. Finally, as we show in the next section, our model can be finetuned for downstream tasks that benefit from exploration because it relies on an implicit memory of the observed RGB sequence. Map-based methods, in contrast, are tied to a 2D abstraction that discards much of the scene semantics and 3D geometry, making adaptation to other tasks harder.
+      Some previous work [<a href="#ref11">11</a>,<a href="#ref12">12</a>] trains RL agents for exploration using a 2D map of the scene as input. This map is either built by a separate module, or obtained from depth sensing, as the agent explores. The agent's reward is then defined as the gain in coverage of this map. Although maps are useful persistent memories, map-based agents often over-prioritize floor coverage. In practice, this can lead to behavior where the agent spends too much time looking carefully at every corner and nook in a room, rather than moving on to discover new rooms. For methods that predict or complete the map, errors in the predicted map can also introduce noisy behavior into the policy. Finally, as we show in the next section, our model can be finetuned for downstream tasks that benefit from exploration because it relies on an implicit memory of the observed RGB sequence. Map-based methods, in contrast, are tied to a 2D abstraction that discards much of the scene semantics and 3D geometry, making adaptation to other tasks harder.
     </p>
-    <p>
-      We compare against several map-based baselines below. Active Neural SLAM (ANS) [<a href="#ref10">10</a>] is a map-based exploration method that uses SLAM to localize the agent and build a 2D map, which is then fed to the policy network for action prediction. The RGB-only version performs SLAM from RGB observations by predicting depth, while the depth version uses depth from a sensor and projects it directly into a 2D map. Occupancy Anticipation (OccA) [<a href="#ref11">11</a>] is another map-based method built on top of ANS. Instead of only using the observed map, it predicts an anticipated occupancy map that completes regions beyond what the agent has already seen. OccA-RGBD uses RGB and depth to project observed regions into a 2D map before completing it, while OccA-RGB does not use depth input. Our method does not require depth at deployment time and operates only on the observed RGB sequence.
-    </p>
+    <p style="color:var(--muted); font-size:0.9rem; margin-bottom:4px;">Select a method to read about it.</p>
+    <p id="maps-method-desc" style="min-height:3.5em; transition: opacity 0.25s;"></p>
     <!-- Method + Scene video selector -->
     <div class="vid-selector">
       <div class="vid-sel-btns" id="maps-method-btns">
@@ -700,13 +728,15 @@
     <table class="results-table" style="font-size:0.82rem; min-width:600px;">
       <thead>
         <tr>
-          <th rowspan="2" style="text-align:left; border-right:1px solid var(--border);">Step</th>
+          <th rowspan="2" style="text-align:left; border-right:1px solid var(--border);">Method</th>
+          <th style="text-align:center; border-right:1px solid var(--border); border-bottom:none;">requires</th>
           <th colspan="3" style="border-bottom:1px solid var(--border);">HM3D — Completeness % ↑</th>
           <th style="border-bottom:1px solid var(--border); border-right:1px solid var(--border);">Avg. dist. (m) ↓</th>
           <th colspan="3" style="border-bottom:1px solid var(--border);">Gibson — Completeness % ↑</th>
           <th style="border-bottom:1px solid var(--border);">Avg. dist. (m) ↓</th>
         </tr>
         <tr>
+          <th style="text-align:center; border-bottom:1px solid var(--border); border-right:1px solid var(--border);">depth?</th>
           <th>@256</th><th>@512</th><th>@1024</th>
           <th style="border-right:1px solid var(--border);">@1024</th>
           <th>@256</th><th>@512</th><th>@1024</th>
@@ -715,31 +745,36 @@
       </thead>
       <tbody>
         <tr>
-          <td style="text-align:left;">ANS-RGB <a href="#ref10">[10]</a></td>
+          <td style="text-align:left; border-right:1px solid var(--border);">ANS-RGB <a href="#ref11">[11]</a></td>
+          <td style="text-align:center; border-right:1px solid var(--border);">✗</td>
           <td>45.28</td><td>54.68</td><td>65.39</td>
           <td style="border-right:1px solid var(--border);">0.41</td>
           <td>55.41</td><td>64.20</td><td>73.14</td><td>0.30</td>
         </tr>
         <tr>
-          <td style="text-align:left;">ANS-depth <a href="#ref10">[10]</a></td>
-          <td>51.02</td><td>61.45</td><td>69.68</td>
-          <td style="border-right:1px solid var(--border);">0.34</td>
-          <td>63.04</td><td>72.79</td><td>79.89</td><td>0.18</td>
-        </tr>
-        <tr>
-          <td style="text-align:left;">OccA-RGB <a href="#ref11">[11]</a></td>
+          <td style="text-align:left; border-right:1px solid var(--border);">OccA-RGB <a href="#ref12">[12]</a></td>
+          <td style="text-align:center; border-right:1px solid var(--border);">✗</td>
           <td>47.67</td><td>58.32</td><td>68.86</td>
           <td style="border-right:1px solid var(--border);">0.33</td>
           <td>57.33</td><td>67.35</td><td>77.93</td><td>0.16</td>
         </tr>
         <tr>
-          <td style="text-align:left;">OccA-RGBD <a href="#ref11">[11]</a></td>
+          <td style="text-align:left; border-right:1px solid var(--border);">ANS-depth <a href="#ref11">[11]</a></td>
+          <td style="text-align:center; border-right:1px solid var(--border);">✓</td>
+          <td>51.02</td><td>61.45</td><td>69.68</td>
+          <td style="border-right:1px solid var(--border);">0.34</td>
+          <td>63.04</td><td>72.79</td><td>79.89</td><td>0.18</td>
+        </tr>
+        <tr>
+          <td style="text-align:left; border-right:1px solid var(--border);">OccA-RGBD <a href="#ref12">[12]</a></td>
+          <td style="text-align:center; border-right:1px solid var(--border);">✓</td>
           <td>52.71</td><td>64.91</td><td>74.62</td>
           <td style="border-right:1px solid var(--border);">0.18</td>
           <td>63.06</td><td>72.96</td><td>81.23</td><td>0.14</td>
         </tr>
         <tr class="ours">
-          <td style="text-align:left;"><strong>Ours</strong></td>
+          <td style="text-align:left; border-right:1px solid var(--border);"><strong>Ours</strong></td>
+          <td style="text-align:center; border-right:1px solid var(--border);">✗</td>
           <td><strong>56.5</strong></td><td><strong>66.69</strong></td><td><strong>74.94</strong></td>
           <td style="border-right:1px solid var(--border);"><strong>0.14</strong></td>
           <td><strong>66.95</strong></td><td><strong>75.79</strong></td><td><strong>82.42</strong></td>
@@ -798,27 +833,10 @@
       We ablate the importance of forward model persistence and agent memory in exploration.
       The visualization below shows exploration results for pipelines where either world
       persistence is ablated (top buttons) or agent memory is ablated (bottom buttons).
+      <strong>The results show that world persistence is significantly important for learning an effective exploration policy. Without it, the agent tends to loop locally without moving farther into the scene.</strong>
     </p>
-    <p>
-      For world persistence, we replace 3DGS with the original ICM and show results for
-      ICM+RNN, the original setting in [<a href="#ref2">2</a>]; ICM+transformer, where the
-      agent keeps our transformer design and only the 3DGS forward model is swapped out for
-      ICM; and short-memory 3DGS, where the 3DGS model only retains Gaussians associated
-      with the last 64 steps at each time. The results show that world persistence is
-      significantly important for learning an effective exploration policy. Without it, the
-      agent tends to loop locally without moving farther into the scene.
-    </p>
-    <p>
-      For the agent's episodic memory, we swap out the transformer with an RNN of the same
-      parameter size (Ours RNN), then ablate the impact of context length for the actor, the
-      critic, or both. We remove context once for the critic (Critic with context=1) and
-      once for the actor (Actor with context=1). We then study how different context lengths
-      given to both networks affect the policy (context=1, 4, 16). The results show that
-      weaker forms of memory revisit already-seen areas more often, while still learning some
-      useful behaviors such as going through doors, but not remembering not to go back in.
-      Interestingly, giving full context to both the actor and the critic helps train a
-      stronger policy.
-    </p>
+    <p style="color:var(--muted); font-size:0.9rem; margin-bottom:4px;">Select a method to read about it.</p>
+    <p id="ablation-method-desc" style="min-height:3.5em; transition: opacity 0.25s;"></p>
     <!-- Ablation video selector -->
     <div class="vid-selector">
       <div class="vid-sel-btns" id="ablation-method-btns">
@@ -924,8 +942,7 @@
   author  = {Goli, Lily and Kerr, Justin and Reda, Daniele and Jacobson, Alec and Tagliasacchi, Andrea and Kanazawa, Angjoo},
   journal = {arXiv},
   year    = {2025}
-}</div>
-    <button class="copy-btn" onclick="copyBibtex()">Copy</button>
+}<button class="copy-btn" onclick="copyBibtex()">Copy</button></div>
   </div>
 
   <!-- ── REFERENCES ─────────────────────────────────────────────────────── -->
@@ -970,24 +987,34 @@
         In <em>ICLR</em>, 2020.
       </li>
       <li id="ref8">
+        Bernhard Kerbl, Georgios Kopanas, Thomas Leimkühler, and George Drettakis.
+        <em>3D Gaussian splatting for real-time radiance field rendering.</em>
+        <em>ACM Transactions on Graphics</em>, 2023.
+      </li>
+      <li id="ref9">
         Yuri Burda, Harri Edwards, Deepak Pathak, Amos Storkey, Trevor Darrell, and Alexei A. Efros.
         <em>Large-scale study of curiosity-driven learning.</em>
         In <em>ICLR</em>, 2019.
       </li>
-      <li id="ref9">
+      <li id="ref10">
         Yuri Burda, Harrison Edwards, Amos Storkey, and Oleg Klimov.
         <em>Exploration by random network distillation.</em>
         In <em>ICLR</em>, 2019.
       </li>
-      <li id="ref10">
+      <li id="ref11">
         Devendra Singh Chaplot, Dhiraj Gandhi, Saurabh Gupta, Abhinav Gupta, and Ruslan Salakhutdinov.
         <em>Learning to explore using active neural SLAM.</em>
         In <em>ICLR</em>, 2020.
       </li>
-      <li id="ref11">
+      <li id="ref12">
         Santhosh K. Ramakrishnan, Ziad Al-Halah, and Kristen Grauman.
         <em>Occupancy anticipation for efficient exploration and navigation.</em>
         In <em>ECCV</em>, 2020.
+      </li>
+      <li id="ref13">
+        Yu Sun, Xinhao Li, et al.
+        <em>Learning to (learn at test time): RNNs with expressive hidden states.</em>
+        In <em>ICML</em>, 2025.
       </li>
     </ol>
   </div>
@@ -1034,23 +1061,62 @@
 
   // ── teaser: play when in view, pause when out ────────────────────────────
   const teaserVideo = document.getElementById('teaser-video');
+  let teaserUserPaused = false;
 
   const teaserObs = new IntersectionObserver(entries => {
     entries.forEach(e => {
       if (e.isIntersecting) {
-        teaserVideo.play().catch(() => {});
+        if (!teaserUserPaused) teaserVideo.play().catch(() => {});
       } else {
         teaserVideo.pause();
+        teaserUserPaused = false;  // reset when scrolled away
       }
     });
   }, { threshold: 0.25 });
   teaserObs.observe(teaserVideo);
+
+  const teaserPauseInd = document.getElementById('teaser-pause-indicator');
+  teaserVideo.style.cursor = 'pointer';
+  teaserVideo.addEventListener('click', () => {
+    if (teaserVideo.paused) {
+      teaserUserPaused = false;
+      teaserVideo.play().catch(() => {});
+      teaserPauseInd.classList.remove('visible');
+    } else {
+      teaserUserPaused = true;
+      teaserVideo.pause();
+      teaserPauseInd.classList.add('visible');
+    }
+  });
+  teaserVideo.addEventListener('play', () => teaserPauseInd.classList.remove('visible'));
 
   // ── mute toggle ─────────────────────────────────────────────────────────
   function toggleMute() {
     const btn = document.getElementById('mute-btn');
     teaserVideo.muted = !teaserVideo.muted;
     btn.textContent = teaserVideo.muted ? '🔇' : '🔊';
+  }
+
+  // ── method image slider ──────────────────────────────────────────────────
+  let _methodSlid = false;
+  function slideMethod() {
+    const wrap = document.getElementById('method-slider-wrap');
+    const img  = document.getElementById('method-slide-img');
+    const btn  = document.getElementById('method-slide-btn');
+    const arrow = document.getElementById('method-slide-arrow');
+    _methodSlid = !_methodSlid;
+    if (_methodSlid) {
+      const shift = -(img.offsetWidth - wrap.offsetWidth);
+      img.style.transform = 'translateX(' + shift + 'px)';
+      arrow.textContent = '◀';
+      btn.style.left  = '4px';
+      btn.style.right = 'auto';
+    } else {
+      img.style.transform = 'translateX(0)';
+      arrow.textContent = '▶';
+      btn.style.left  = 'auto';
+      btn.style.right = '1px';
+    }
   }
 
   // ── copy BibTeX ──────────────────────────────────────────────────────────
@@ -1113,8 +1179,24 @@
     let selMethod = 'ours';
     let selScene  = 'scene1';
 
-    // Video files follow the pattern: assets/videos/maps_{method}_{scene}.mp4
-    // e.g. maps_ours_scene1.mp4, maps_ans-rgb_scene2.mp4
+    const methodDescs = {
+      ours:      'Our method operates only on the observed RGB sequence, without requiring depth or camera pose at deployment. The agent builds a memory and is trained with a curiosity reward derived from the persistent forward model.',
+      ansrgb:    'Active Neural SLAM (ANS) [<a href="#ref11">11</a>] localizes the agent and builds a 2D top-down map from RGB observations, predicting depth monocularly. The map is fed to the policy for action prediction, and the reward is defined as the gain in map coverage.',
+      ansdepth:  'Active Neural SLAM (ANS) [<a href="#ref11">11</a>] with a depth sensor projects observations directly into a 2D top-down map using ground-truth depth. The map is fed to the policy for action prediction, with coverage gain as the reward.',
+      occargb:   'Occupancy Anticipation (OccA) [<a href="#ref12">12</a>] extends ANS by predicting a 2D top-down anticipated occupancy map that fills in regions beyond what the agent has observed. OccA-RGB estimates depth from RGB to build the input map before completing it.',
+      occargbd:  'Occupancy Anticipation (OccA) [<a href="#ref12">12</a>] extends ANS by predicting a 2D top-down anticipated occupancy map that fills in regions beyond what the agent has observed. OccA-RGBD uses both RGB and a depth sensor to project observed regions into the map before completion.',
+    };
+
+    function updateMapsDesc() {
+      const el = document.getElementById('maps-method-desc');
+      if (!el) return;
+      el.style.opacity = '0';
+      setTimeout(() => {
+        el.innerHTML = methodDescs[selMethod] || '';
+        el.style.opacity = '1';
+      }, 180);
+    }
+
     function updateMapsVideo() {
       const vid = document.getElementById('vid-maps');
       const src = document.getElementById('vid-maps-src');
@@ -1137,6 +1219,7 @@
         document.querySelectorAll('.sel-btn[data-group="maps-method"]').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         selMethod = btn.dataset.val;
+        updateMapsDesc();
         updateMapsVideo();
       });
     });
@@ -1150,13 +1233,37 @@
       });
     });
 
-    // Load initial video on page load
+    // Load initial video and description on page load
+    updateMapsDesc();
     updateMapsVideo();
   })();
 
   // ── ablation video selector ───────────────────────────────────────────────
   (function() {
     let selMethod = 'ours';
+
+    const ablationDescs = {
+      'ours':             'Our full model with 3DGS persistent forward model and transformer agent with full context. The agent builds a 3D memory of the scene online and uses its full episodic history to make decisions.',
+      'icm-rnn':          'ICM+RNN [<a href="#ref2">2</a>] is the original curiosity-driven exploration baseline: the forward model is the standard ICM (no persistence) and the agent uses an RNN with limited recurrent memory. Without world persistence, the agent tends to loop locally.',
+      'icm-transformer':  'ICM+transformer keeps our transformer agent design but replaces the 3DGS forward model with the standard ICM. The agent has strong memory, but the forward model has no episodic persistence, so rewards remain spuriously high in already visited areas.',
+      'short-memory-3dgs':'Short-memory 3DGS uses our full transformer agent but the 3DGS model is artificially capped in the number of Gaussians to only reconstruct the images from the last 64 steps, discarding earlier observations. We see a similar effect of going in loops as the impersistent model of the world results in false positive reward.',
+      'ours-rnn':         'Ours RNN replaces the transformer with an RNN of equal parameter count, keeping the 3DGS persistent forward model. With an RNN, the agent revisits previously seen areas more often, while still learning useful behaviors for exploration, such as seeking doors and going down corridors.',
+      'actor-ctx1':       'Actor with context=1 gives the actor only the current frame as context (no episodic history) while the critic retains full context. Comparing this with the case where both actor and critic have just the current frame context (both with context=1) shows that having a memory-aware critic actually helps exploration by quite a bit.',
+      'critic-ctx1':      'Critic with context=1 gives the critic only the current frame while the actor retains full context. This tests whether the value function benefits from long-horizon episodic context during training. Interestingly, giving full context to both the actor and the critic helps train a stronger policy.',
+      'both-ctx16':       'Both with context=16 limits both actor and critic to a window of 16 past frames. The agent can look back a short distance but misses earlier parts of the episode.',
+      'both-ctx4':        'Both with context=4 restricts both actor and critic to only the 4 most recent frames, severely limiting episodic awareness and leading to more revisitation of already-seen areas.',
+      'both-ctx1':        'Both with context=1 gives both actor and critic only the current frame, i.e. no episodic memory at all. The agent must act purely from immediate observations, losing all sense of where it has already been.',
+    };
+
+    function updateAblationDesc() {
+      const el = document.getElementById('ablation-method-desc');
+      if (!el) return;
+      el.style.opacity = '0';
+      setTimeout(() => {
+        el.innerHTML = ablationDescs[selMethod] || '';
+        el.style.opacity = '1';
+      }, 180);
+    }
 
     // Video files follow the pattern: assets/videos/ablation_{method}.mp4
     const ablationFiles = {
@@ -1193,16 +1300,19 @@
         document.querySelectorAll('.sel-btn[data-group="ablation-method"]').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         selMethod = btn.dataset.val;
+        updateAblationDesc();
         updateAblationVideo();
       });
     });
 
-    // Load initial video on page load
+    // Load initial video and description on page load
+    updateAblationDesc();
     updateAblationVideo();
   })();
 
   // ── click-to-pause for all videos ────────────────────────────────────────
   document.querySelectorAll('video').forEach(vid => {
+    if (vid.id === 'teaser-video') return;  // teaser has its own click handler above
     // Wrap in a relative container if not already inside one
     const parent = vid.parentElement;
     if (!parent.classList.contains('vid-click-wrap') &&

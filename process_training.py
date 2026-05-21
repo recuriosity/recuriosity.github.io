@@ -83,7 +83,28 @@ def make_indicator(png_path, size):
 
 _IS = CIRCLE_R * 2
 _ind_coins = make_indicator("assets/images/coins.png", _IS)
-_ind_cross = make_indicator("assets/images/cross.png", _IS)
+
+def make_coins_with_cross(size):
+    """Coins icon with a semi-transparent cross in the top-right corner."""
+    base  = Image.fromarray(make_indicator("assets/images/coins.png", size)).convert("RGBA")
+    cross = Image.open("assets/images/cross.png").convert("RGBA")
+    # Cross at 50% of circle size, top-right, 70% opacity
+    cross_sz = int(size * 0.50)
+    cross    = cross.resize((cross_sz, cross_sz), Image.LANCZOS)
+    # Tint cross red and set opacity
+    r, g, b, a = cross.split()
+    a = a.point(lambda x: int(x * 0.85))
+    r = r.point(lambda x: min(255, int(x * 0.3 + 200)))  # push red channel up
+    g = g.point(lambda x: int(x * 0.15))                 # suppress green
+    b = b.point(lambda x: int(x * 0.15))                 # suppress blue
+    cross = Image.merge("RGBA", (r, g, b, a))
+    out    = base.copy()
+    # Place centered
+    offset = (size - cross_sz) // 2
+    out.paste(cross, (offset, offset), cross)
+    return np.array(out)
+
+_ind_cross = make_coins_with_cross(_IS)
 
 def is_green_reward(src):
     region = src[335:360, C3_X:C3_X+C3_W]
