@@ -83,7 +83,7 @@ def _load_sound(path, gain=0.80):
     if peak > 0: s *= gain / peak
     return s
 
-_SND_CLICK  = _load_sound(os.path.join(_audio_dir, "one_click.mov"), gain=0.40)
+_SND_CLICK  = _load_sound(os.path.join(_audio_dir, "one_click.mov"), gain=0.15)
 _SND_BELL   = _load_sound(os.path.join(_audio_dir, "bell.mov"),      gain=0.55)
 _SND_BACH   = _load_sound(os.path.join(_audio_dir, "chopin.mp3"),    gain=0.30)
 _SND_HOBBIT = _load_sound(os.path.join(_audio_dir, "hobbit.mov"),    gain=0.55)
